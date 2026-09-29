@@ -68,7 +68,7 @@ If you prefer a pure text-based loop without UI widgets, you can run the interac
 If you are running this locally on a Linux/macOS/Windows machine with a dedicated NVIDIA GPU:
 
 ```bash
-git clone [https://github.com/](https://github.com/harshad-inarkar/indic_transformer.git
+git clone https://github.com/harshad-inarkar/indic_transformer.git
 cd indic_transformer
 pip install -e .
 
