@@ -10,7 +10,6 @@ from engine.decoder import TranslationGenerator
 from engine.evaluator import TranslationEvaluator
 from engine.trainer import Trainer
 from models.transformer import MultilingualTransformer
-from ui.widget import TranslationWidget
 
 
 def print_stats_table(
