@@ -1,5 +1,5 @@
 project:
-  name: "indic-transformer"
+  name: "indic_transformer"
   seed: 42
 
 language:
