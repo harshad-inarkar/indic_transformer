@@ -24,7 +24,7 @@ Clone the repository and install the package in editable mode.
 !nvidia-smi
 
 # Clone and install
-!git clone [https://github.com/](https://github.com/harshad-inarkar/indic_transformer.git
+!git clone https://github.com/harshad-inarkar/indic_transformer.git
 %cd indic_transformer
 !pip install -q -e .
 
