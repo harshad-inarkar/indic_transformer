@@ -5,6 +5,13 @@ import ipywidgets as widgets
 from IPython.display import display
 import torch
 
+# Automatically enable Colab widget manager if running in Google Colab
+try:
+    from google.colab import output
+    output.enable_custom_widget_manager()
+except ImportError:
+    pass
+
 from indic_transformer.config import AppConfig
 from indic_transformer.data.dataset import DataPipeline
 from indic_transformer.data.tokenizer import TokenizerManager
@@ -17,7 +24,7 @@ class TranslationWidget:
         self.generator = generator
         self.tgt_code = tgt_code.upper()
 
-    def render(self) -> None:
+    def render(self) -> widgets.VBox:
         text_box = widgets.Text(
             value="education is essential for every child",
             description="EN:",
@@ -42,10 +49,12 @@ class TranslationWidget:
                 print(f"{self.tgt_code}: {res}")
 
         translate_btn.on_click(on_click)
-        display(widgets.VBox([text_box, method_dropdown, translate_btn, out]))
+        
+        # Return the VBox instead of just displaying it
+        return widgets.VBox([text_box, method_dropdown, translate_btn, out])
 
 
-def launch(config_path: str = "configs/default.yaml") -> None:
+def launch(config_path: str = "configs/default.yaml") -> widgets.VBox | None:
     """Loads trained checkpoint and renders the interactive widget in Colab/Jupyter."""
     assert torch.cuda.is_available(), "CUDA device required. CPU execution is disabled."
     device = torch.device("cuda")
@@ -57,9 +66,10 @@ def launch(config_path: str = "configs/default.yaml") -> None:
     if not ckpt_path.exists():
         print(f"[Error] Checkpoint not found at: {ckpt_path}")
         print("Please run training first: !python scripts/train.py")
-        return
+        return None
 
-    # Load cached pairs & tokenizers
+    print("Loading cached dataset and tokenizers (this takes a few seconds)...")
+    
     pipeline = DataPipeline(
         dataset_name=cfg.language.dataset_name,
         tgt_lang=cfg.language.tgt_lang,
@@ -74,7 +84,7 @@ def launch(config_path: str = "configs/default.yaml") -> None:
     tok_src = TokenizerManager.train(tr_src, cfg.tokenizer.algo_src, cfg.tokenizer.max_vocab_size)
     tok_tgt = TokenizerManager.train(tr_tgt, cfg.tokenizer.algo_tgt, cfg.tokenizer.max_vocab_size)
 
-    # Reconstruct model and load weights
+    print("Loading model weights...")
     model = MultilingualTransformer(
         src_vocab_size=tok_src.get_vocab_size(),
         tgt_vocab_size=tok_tgt.get_vocab_size(),
@@ -90,6 +100,9 @@ def launch(config_path: str = "configs/default.yaml") -> None:
     model.load_state_dict(checkpoint["state_dict"])
     model.eval()
 
+    print("Ready! Rendering widget...\n")
     generator = TranslationGenerator(model, tok_src, tok_tgt, cfg.data.max_len, device)
     ui = TranslationWidget(generator, cfg.language.tgt_lang)
-    ui.render()
+    
+    # Return the widget directly to the cell output
+    return ui.render()
