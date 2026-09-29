@@ -28,7 +28,7 @@ Clone the repository and install the package in editable mode.
 %cd indic_transformer
 !pip install -q -e .
 
-
+```
 
 ### 2. Train the Model
 
