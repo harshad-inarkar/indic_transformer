@@ -16,6 +16,6 @@ High-performance, from-scratch Sequence-to-Sequence Transformer (Vaswani et al.,
 ## Installation
 
 ```bash
-git clone [https://github.com/](https://github.com/)<your-username>/indic-transformer.git
-cd indic-transformer
+git clone [https://github.com/](https://github.com/harshad-inarkar/indic_transformer.git
+cd indic_transformer
 pip install -e .

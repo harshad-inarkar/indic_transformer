@@ -8,7 +8,7 @@ import yaml
 
 @dataclass
 class ProjectConfig:
-    name: str = "indic-transformer"
+    name: str = "indic_transformer"
     seed: int = 42
 
 
