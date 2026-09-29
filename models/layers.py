@@ -5,7 +5,7 @@ from typing import cast
 import torch
 from torch import Tensor, nn
 import torch.nn.functional as F
-from indic_transformer.models.attention import MultiHeadAttention
+from models.attention import MultiHeadAttention
 
 
 class PositionalEncoding(nn.Module):

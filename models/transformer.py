@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import cast
 import torch
 from torch import Tensor, nn
-from indic_transformer.models.layers import DecoderLayer, EncoderLayer, PositionalEncoding
+from models.layers import DecoderLayer, EncoderLayer, PositionalEncoding
 
 
 def make_src_mask(src: Tensor, pad_idx: int) -> Tensor:
