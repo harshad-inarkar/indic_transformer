@@ -1,11 +1,11 @@
 import argparse
 import sys
 import torch
-from indic_transformer.config import AppConfig
-from indic_transformer.data.dataset import DataPipeline
-from indic_transformer.data.tokenizer import TokenizerManager
-from indic_transformer.engine.decoder import TranslationGenerator
-from indic_transformer.models.transformer import MultilingualTransformer
+from config import AppConfig
+from data.dataset import DataPipeline
+from data.tokenizer import TokenizerManager
+from engine.decoder import TranslationGenerator
+from models.transformer import MultilingualTransformer
 
 def main():
     parser = argparse.ArgumentParser(description="Interactive Translation Tester")

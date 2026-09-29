@@ -3,14 +3,14 @@ from __future__ import annotations
 import argparse
 import sys
 import torch
-from indic_transformer.config import AppConfig
-from indic_transformer.data.dataset import DataPipeline, TranslationDataset
-from indic_transformer.data.tokenizer import TokenizerManager
-from indic_transformer.engine.decoder import TranslationGenerator
-from indic_transformer.engine.evaluator import TranslationEvaluator
-from indic_transformer.engine.trainer import Trainer
-from indic_transformer.models.transformer import MultilingualTransformer
-from indic_transformer.ui.widget import TranslationWidget
+from config import AppConfig
+from data.dataset import DataPipeline, TranslationDataset
+from data.tokenizer import TokenizerManager
+from engine.decoder import TranslationGenerator
+from engine.evaluator import TranslationEvaluator
+from engine.trainer import Trainer
+from models.transformer import MultilingualTransformer
+from ui.widget import TranslationWidget
 
 
 def print_stats_table(
