@@ -89,16 +89,21 @@ class DataPipeline:
             return (*self._load_jsonl(train_path), *self._load_jsonl(test_path))
 
         total = train_size + test_size
-        if self.dataset_name in ("cfilt/iitb-english-hindi", "acomquest/Saamayik"):
-            ds = load_dataset(self.dataset_name, split="train")
-        else:
-            ds = load_dataset(self.dataset_name, self.tgt_lang, split="train")
 
-        ds = ds.shuffle(seed=self.seed)
-        limit = min(total * self.oversample, len(ds))
+        # Use streaming=True for fast, memory-efficient PyArrow lazy loading
+        if self.dataset_name in ("cfilt/iitb-english-hindi", "acomquest/Saamayik"):
+            ds = load_dataset(self.dataset_name, split="train", streaming=True, trust_remote_code=True)
+        else:
+            ds = load_dataset(self.dataset_name, self.tgt_lang, split="train", streaming=True, trust_remote_code=True)
+
+        # Shuffle the stream dynamically using a buffer to randomize without downloading the entire corpus
+        ds = ds.shuffle(seed=self.seed, buffer_size=10_000)
 
         src, tgt = [], []
-        for row in ds.select(range(limit)):
+        print(f"Streaming and filtering {total:,} random clean pairs from {self.dataset_name}...")
+
+        # Stop downloading the exact moment we hit the required target size
+        for row in ds:
             if self.dataset_name == "cfilt/iitb-english-hindi":
                 en = row["translation"]["en"].strip()
                 tg = row["translation"]["hi"].strip()
@@ -113,6 +118,7 @@ class DataPipeline:
             if is_clean_pair(en, tg, self.max_len, self.max_ratio):
                 src.append(en)
                 tgt.append(tg)
+            
             if len(src) >= total:
                 break
 

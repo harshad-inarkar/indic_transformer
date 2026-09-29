@@ -9,13 +9,14 @@ description = "High-performance PyTorch multilingual transformer trained from sc
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "torch>=2.2.0",
-    "tokenizers>=0.19.0",
-    "datasets>=2.18.0",
-    "nltk>=3.8.1",
-    "pyyaml>=6.0.1",
-    "tqdm>=4.66.0",
-    "ipywidgets>=8.1.0"
+    "torch",
+    "tokenizers",
+    "transformers",
+    "datasets",
+    "nltk",
+    "pyyaml",
+    "tqdm",
+    "ipywidgets"
 ]
 
 [tool.setuptools.packages.find]
