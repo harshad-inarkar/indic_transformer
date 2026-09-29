@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import sys
 import torch
-from config import AppConfig
+from configs.config import AppConfig
 from data.dataset import DataPipeline, TranslationDataset
 from data.tokenizer import TokenizerManager
 from engine.decoder import TranslationGenerator
