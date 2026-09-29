@@ -8,6 +8,7 @@ import torch
 from datasets import load_dataset
 from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
+from tqdm.auto import tqdm
 
 
 def is_clean_pair(en: str, tgt: str, max_len: int, max_ratio: float) -> bool:
@@ -90,37 +91,37 @@ class DataPipeline:
 
         total = train_size + test_size
 
-        # Use streaming=True for fast, memory-efficient PyArrow lazy loading
         if self.dataset_name in ("cfilt/iitb-english-hindi", "acomquest/Saamayik"):
             ds = load_dataset(self.dataset_name, split="train", streaming=True, trust_remote_code=True)
         else:
             ds = load_dataset(self.dataset_name, self.tgt_lang, split="train", streaming=True, trust_remote_code=True)
 
-        # Shuffle the stream dynamically using a buffer to randomize without downloading the entire corpus
         ds = ds.shuffle(seed=self.seed, buffer_size=10_000)
 
         src, tgt = [], []
         print(f"Streaming and filtering {total:,} random clean pairs from {self.dataset_name}...")
 
-        # Stop downloading the exact moment we hit the required target size
-        for row in ds:
-            if self.dataset_name == "cfilt/iitb-english-hindi":
-                en = row["translation"]["en"].strip()
-                tg = row["translation"]["hi"].strip()
-            elif self.dataset_name == "acomquest/Saamayik":
-                rec = row.get("translation", row)
-                en = str(rec.get("en", "")).strip()
-                tg = str(rec.get("sa", "")).strip()
-            else:
-                en = row["src"].strip()
-                tg = row["tgt"].strip()
+        # Wrap the extraction in a tqdm progress bar
+        with tqdm(total=total, desc="Extracting Pairs") as pbar:
+            for row in ds:
+                if self.dataset_name == "cfilt/iitb-english-hindi":
+                    en = row["translation"]["en"].strip()
+                    tg = row["translation"]["hi"].strip()
+                elif self.dataset_name == "acomquest/Saamayik":
+                    rec = row.get("translation", row)
+                    en = str(rec.get("en", "")).strip()
+                    tg = str(rec.get("sa", "")).strip()
+                else:
+                    en = row["src"].strip()
+                    tg = row["tgt"].strip()
 
-            if is_clean_pair(en, tg, self.max_len, self.max_ratio):
-                src.append(en)
-                tgt.append(tg)
-            
-            if len(src) >= total:
-                break
+                if is_clean_pair(en, tg, self.max_len, self.max_ratio):
+                    src.append(en)
+                    tgt.append(tg)
+                    pbar.update(1)  # Advance the progress bar by 1
+                
+                if len(src) >= total:
+                    break
 
         split_idx = int(len(src) * (train_size / total))
         train_src, train_tgt = src[:split_idx], tgt[:split_idx]
