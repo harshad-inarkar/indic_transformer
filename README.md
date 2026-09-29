@@ -1,4 +1,4 @@
-# Indic-Transformer
+# indic_transformer
 
 High-performance, from-scratch Sequence-to-Sequence Transformer (Vaswani et al., 2017) built with PyTorch, optimized exclusively for CUDA hardware. Supports English to 12+ Indic languages via Hugging Face parallel corpora (`ai4bharat/samanantar`, `cfilt/iitb-english-hindi`, `acomquest/Saamayik`).
 
@@ -24,8 +24,8 @@ Clone the repository and install the package in editable mode.
 !nvidia-smi
 
 # Clone and install
-!git clone [https://github.com/](https://github.com/)<your-username>/indic-transformer.git
-%cd indic-transformer
+!git clone [https://github.com/](https://github.com/harshad-inarkar/indic_transformer.git
+%cd indic_transformer
 !pip install -q -e .
 
 
@@ -68,8 +68,8 @@ If you prefer a pure text-based loop without UI widgets, you can run the interac
 If you are running this locally on a Linux/macOS/Windows machine with a dedicated NVIDIA GPU:
 
 ```bash
-git clone [https://github.com/](https://github.com/)<your-username>/indic-transformer.git
-cd indic-transformer
+git clone [https://github.com/](https://github.com/harshad-inarkar/indic_transformer.git
+cd indic_transformer
 pip install -e .
 
 ```
