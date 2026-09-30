@@ -17,7 +17,14 @@ class TranslationGenerator:
         max_len: int,
         device: torch.device,
     ) -> None:
-        self.model = model
+    
+        # Enable Multi-GPU Inference (specifically accelerates batched_beam_decode)
+        if torch.cuda.device_count() > 1 and device.type == "cuda":
+            self.model = nn.DataParallel(model).to(self.device)
+        else:
+            self.model = model.to(self.device)
+
+
         self.src_tok = src_tokenizer
         self.tgt_tok = tgt_tokenizer
         self.max_len = max_len

@@ -9,10 +9,10 @@ from multilingual_transformer.models.transformer import MultilingualTransformer
 
 def main():
     parser = argparse.ArgumentParser(description="Interactive Translation Tester")
-    parser.add_argument("--config", type=str, default="configs/default.yaml")
+    parser.add_argument("--config", type=str, default="configs/transformer_config.toml")
     args = parser.parse_args()
 
-    cfg = AppConfig.from_yaml(args.config)
+    cfg = AppConfig.from_toml(args.config)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tag = cfg.language.lang_pair.lower().replace("-", "_")
     ckpt_path = cfg.data.checkpoint_dir / f"transformer_{tag}_best.pt"

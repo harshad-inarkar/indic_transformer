@@ -51,10 +51,10 @@ def print_stats_table(
 def main() -> None:
     assert torch.cuda.is_available(), "CUDA device required. CPU execution is disabled."
     parser = argparse.ArgumentParser(description="Multilingual Transformer Engine")
-    parser.add_argument("--config", type=str, default="configs/default.yaml")
+    parser.add_argument("--config", type=str, default="configs/transformer_config.toml")
     args = parser.parse_args()
 
-    cfg = AppConfig.from_yaml(args.config)
+    cfg = AppConfig.from_toml(args.config)
     torch.manual_seed(cfg.project.seed)
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.benchmark = True

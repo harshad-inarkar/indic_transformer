@@ -25,7 +25,18 @@ class Trainer:
     ) -> None:
         assert torch.cuda.is_available(), "Execution restricted to GPU (CUDA)."
         self.device = torch.device("cuda")
-        self.model = model.to(self.device)
+
+
+
+        # Enable Multi-GPU Training
+        if torch.cuda.device_count() > 1:
+            print(f"🚀 Utilizing {torch.cuda.device_count()} GPUs for training!")
+            self.model = nn.DataParallel(model).to(self.device)
+        else:
+            self.model = model.to(self.device)
+        
+
+
         self.config = config
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -114,8 +125,13 @@ class Trainer:
             if va_loss < best_loss:
                 best_loss = va_loss
                 self.config.data.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+                
+                # Unwrap the model from DataParallel before saving the state_dict
+                # This ensures the checkpoint can be loaded later on a single GPU
+                model_to_save = self.model.module if isinstance(self.model, nn.DataParallel) else self.model
+                
                 torch.save(
-                    {"state_dict": self.model.state_dict(), "loss": best_loss, "epoch": epoch},
+                    {"state_dict": model_to_save.state_dict(), "loss": best_loss, "epoch": epoch},
                     best_path,
                 )
 

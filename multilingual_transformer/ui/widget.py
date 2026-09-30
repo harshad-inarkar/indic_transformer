@@ -54,11 +54,11 @@ class TranslationWidget:
         return widgets.VBox([text_box, method_dropdown, translate_btn, out])
 
 
-def launch(config_path: str = "configs/default.yaml") -> widgets.VBox | None:
+def launch(config_path: str = "configs/transformer_config.toml") -> widgets.VBox | None:
     """Loads trained checkpoint and renders the interactive widget in Colab/Jupyter."""
     assert torch.cuda.is_available(), "CUDA device required. CPU execution is disabled."
     device = torch.device("cuda")
-    cfg = AppConfig.from_yaml(config_path)
+    cfg = AppConfig.from_toml(config_path)
 
     tag = cfg.language.lang_pair.lower().replace("-", "_")
     ckpt_path = cfg.data.checkpoint_dir / f"transformer_{tag}_best.pt"

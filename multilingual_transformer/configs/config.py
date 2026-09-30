@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-import yaml
+import tomli as tomllib
+
 
 
 @dataclass
@@ -76,9 +77,9 @@ class AppConfig:
     inference: InferenceConfig
 
     @classmethod
-    def from_yaml(cls, path: str | Path) -> AppConfig:
-        with open(path, "r", encoding="utf-8") as f:
-            raw = yaml.safe_load(f)
+    def from_toml(cls, path: str | Path) -> AppConfig:
+        with open(path, "rb") as f:
+            raw = tomllib.load(f)
 
         return cls(
             project=ProjectConfig(**raw.get("project", {})),
