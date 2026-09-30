@@ -1,4 +1,4 @@
-# indic_transformer
+# multilingual_transformer
 
 High-performance, from-scratch Sequence-to-Sequence Transformer (Vaswani et al., 2017) built with PyTorch, optimized exclusively for CUDA hardware. Supports English to 12+ Indic languages via Hugging Face parallel corpora (`ai4bharat/samanantar`, `cfilt/iitb-english-hindi`, `acomquest/Saamayik`).
 
@@ -9,7 +9,7 @@ High-performance, from-scratch Sequence-to-Sequence Transformer (Vaswani et al.,
 * **Strict OOP Modular Design:** Separation of concerns between Data, Tokenization, Architecture, Scheduling, and Inference.
 * **CUDA Optimized:** Uses `torch.amp.autocast`, fused AdamW, non-blocking page-locked host-to-device transfers, and numerical underflow guardrails.
 * **Vectorized Generation:** Batched greedy decoding and batched beam search decoding with cross-attention state caching.
-* **Config-Driven:** Fully parameterizable execution via YAML (`configs/default.yaml`).
+* **Config-Driven:** Fully parameterizable execution via TOML (`configs/transformer_config.toml`).
 
 ---
 
@@ -24,8 +24,8 @@ Clone the repository and install the package in editable mode.
 !nvidia-smi
 
 # Clone and install
-!git clone https://github.com/harshad-inarkar/indic_transformer.git
-%cd indic_transformer
+!git clone https://github.com/harshad-inarkar/multilingual_transformer.git
+%cd multilingual_transformer
 !pip install -q -e .
 
 ```
@@ -35,7 +35,7 @@ Clone the repository and install the package in editable mode.
 Execute the end-to-end pipeline using the default YAML configuration. This will download the dataset, train the tokenizers, run the training loop, calculate BLEU/chrF metrics, and save the best weights to the `checkpoints/` directory.
 
 ```bash
-!python scripts/train.py --config configs/default.yaml
+!python scripts/train.py --config configs/transformer_config.toml
 
 ```
 
@@ -46,9 +46,9 @@ Render a UI text box and dropdown directly in your notebook to test translations
 Run this in a standard Python cell (not a bash cell):
 
 ```python
-from indic_transformer.ui.widget import launch
+from multilingual_transformer.ui.widget import launch
 
-launch(config_path="configs/default.yaml")
+launch(config_path="configs/transformer_config.toml")
 
 ```
 
@@ -57,7 +57,7 @@ launch(config_path="configs/default.yaml")
 If you prefer a pure text-based loop without UI widgets, you can run the interactive terminal script. Type your English sentences and get immediate greedy and beam search translations.
 
 ```bash
-!python scripts/interactive.py --config configs/default.yaml
+!python scripts/interactive.py --config configs/transformer_config.toml
 
 ```
 
@@ -68,15 +68,15 @@ If you prefer a pure text-based loop without UI widgets, you can run the interac
 If you are running this locally on a Linux/macOS/Windows machine with a dedicated NVIDIA GPU:
 
 ```bash
-git clone https://github.com/harshad-inarkar/indic_transformer.git
-cd indic_transformer
+git clone https://github.com/harshad-inarkar/multilingual_transformer.git
+cd multilingual_transformer
 pip install -e .
 
 ```
 
 ### Modifying the Configuration
 
-Modify `configs/default.yaml` to specify target languages, model dimensions, training hyperparameters, or test prompts:
+Modify `configs/transformer_config.toml` to specify target languages, model dimensions, training hyperparameters, or test prompts:
 
 ```yaml
 language:
