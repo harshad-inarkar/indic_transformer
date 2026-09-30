@@ -12,7 +12,7 @@ try:
 except ImportError:
     pass
 
-from config import AppConfig
+from multilingual_transformer.configs.config  import AppConfig
 from multilingual_transformer.data.dataset import DataPipeline
 from multilingual_transformer.data.tokenizer import TokenizerManager
 from multilingual_transformer.engine.decoder import TranslationGenerator
