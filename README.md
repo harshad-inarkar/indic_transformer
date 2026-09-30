@@ -2,8 +2,6 @@
 
 A from-scratch implementation of the Transformer (Vaswani et al., 2017) in PyTorch for **English → Indic machine translation**. Train one model per target language on public parallel corpora, then evaluate with BLEU and chrF and translate interactively with greedy or beam search decoding.
 
-Requires an NVIDIA GPU (CUDA). CPU-only execution is not supported.
-
 ## Features
 
 - Encoder-decoder Transformer built from scratch (no `nn.Transformer`)
@@ -92,7 +90,7 @@ The widget loads the trained checkpoint and cached tokenizers automatically.
 
 ## Google Colab
 
-Enable a GPU runtime (Runtime → Change runtime type), then run:
+**0. Enable a GPU runtime (Runtime → Change runtime type), then setup cell:**
 
 ```python
 %cd /content
@@ -101,11 +99,31 @@ Enable a GPU runtime (Runtime → Change runtime type), then run:
 %cd multilingual_transformer
 !pip install -q -e .
 !mkdir -p work_dir
-%cd work_dir
-!python -m multilingual_transformer.scripts.train
 ```
 
-To translate afterwards, run the widget snippet from Quick Start in a new cell (from the same `work_dir`).
+**1. Train** (downloads data, trains tokenizers, trains the model, reports BLEU/chrF, saves the best checkpoint to `checkpoints/`):
+
+```bash
+%cd work_dir
+
+python -m multilingual_transformer.scripts.train
+```
+
+**2. Translate in the terminal:**
+
+```bash
+python -m multilingual_transformer.scripts.interactive
+```
+
+Enter an English sentence to get both greedy and beam search translations.
+
+**3. Translate in a notebook** (run in a Python cell):
+
+```python
+from multilingual_transformer.ui.widget import launch
+launch()
+```
+
 
 ## Configuration
 
