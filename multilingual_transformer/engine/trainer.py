@@ -135,6 +135,8 @@ class Trainer:
                     best_path,
                 )
 
+            free_memory()
+
         total_time = time.time() - start_time
         peak_mem = torch.cuda.max_memory_allocated() / 1e9
         peak_res = torch.cuda.max_memory_reserved() / 1e9

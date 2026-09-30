@@ -11,6 +11,7 @@ from multilingual_transformer.engine.evaluator import TranslationEvaluator
 from multilingual_transformer.engine.trainer import Trainer
 from multilingual_transformer.models.transformer import MultilingualTransformer
 from pathlib import Path
+from multilingual_transformer.utils.helpers import set_seed, free_memory
 
 
 def print_stats_table(
@@ -61,7 +62,21 @@ def main() -> None:
     
 
     cfg = AppConfig.from_toml(args.config)
-    torch.manual_seed(cfg.project.seed)
+
+
+    # --- NEW: Print Key Config Information at Start ---
+    print("\n" + "=" * 50)
+    print("          INITIALIZING TRAINING PIPELINE")
+    print("=" * 50)
+    print(f"Dataset Name : {cfg.language.dataset_name}")
+    print(f"Language     : {cfg.language.target_language} ({cfg.language.tgt_lang})")
+    print(f"Tokenizers   : SRC = {cfg.tokenizer.algo_src.upper()} | TGT = {cfg.tokenizer.algo_tgt.upper()}")
+    print(f"Epochs       : {cfg.training.epochs}")
+    print("=" * 50 + "\n")
+
+
+    set_seed(cfg.project.seed)
+
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.benchmark = True
 
@@ -88,6 +103,8 @@ def main() -> None:
 
     tr_loader = pipeline.create_loader(tr_ds, cfg.training.batch_size, shuffle=True)
     val_loader = pipeline.create_loader(val_ds, cfg.training.batch_size, shuffle=False)
+
+    free_memory()
 
     model = MultilingualTransformer(
         src_vocab_size=tok_src.get_vocab_size(),
