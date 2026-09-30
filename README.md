@@ -68,16 +68,28 @@ Execute the end-to-end pipeline using the default TOML configuration. This will 
 !python -m multilingual_transformer.scripts.train
 ```
 
-### 3. Interactive Translation Widget
+### 3. Interactive Script
+
+Test the transformer model with interactive script.
+
+```bash
+%cd /content/multilingual_transformer/work_dir
+
+!python -m multilingual_transformer.scripts.interactive
+```
+
+
+### 4. Interactive Translation Widget
 
 Render a UI text box and dropdown directly in your notebook to test translations instantly. This automatically loads your trained checkpoint and cached tokenizers.
 
 Run this in a standard Python cell (not a bash cell):
 
 ```python
-from multilingual_transformer.ui.widget import launch
+%cd /content/multilingual_transformer/work_dir
 
-launch(config_path="configs/transformer_config.toml")
+from multilingual_transformer.ui.widget import launch
+launch()
 
 ```
 

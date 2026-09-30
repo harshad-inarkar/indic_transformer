@@ -72,6 +72,10 @@ def main() -> None:
     print(f"Language     : {cfg.language.target_language} ({cfg.language.tgt_lang})")
     print(f"Tokenizers   : SRC = {cfg.tokenizer.algo_src.upper()} | TGT = {cfg.tokenizer.algo_tgt.upper()}")
     print(f"Epochs       : {cfg.training.epochs}")
+    print(f"Train Size   : {cfg.data.train_size}")
+    print(f"Test Size    : {cfg.data.test_size}")
+
+
     print("=" * 50 + "\n")
 
 
