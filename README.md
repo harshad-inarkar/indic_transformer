@@ -1,6 +1,6 @@
 # multilingual_transformer
 
-High-performance, from-scratch Sequence-to-Sequence Transformer (Vaswani et al., 2017) built with PyTorch, optimized exclusively for CUDA hardware[cite: 2]. Supports English to 12+ Indic languages via Hugging Face parallel corpora (`ai4bharat/samanantar`, `cfilt/iitb-english-hindi`, `acomquest/Saamayik`)[cite: 2].
+High-performance, from-scratch Sequence-to-Sequence Transformer (Vaswani et al., 2017) built with PyTorch, optimized exclusively for CUDA hardware. Supports English to 12+ Indic languages via Hugging Face parallel corpora (`ai4bharat/samanantar`, `cfilt/iitb-english-hindi`, `acomquest/Saamayik`).
 
 ---
 
@@ -33,19 +33,19 @@ High-performance, from-scratch Sequence-to-Sequence Transformer (Vaswani et al.,
 
 ## Architecture & Features
 
-* **Strict OOP Modular Design:** Separation of concerns between Data, Tokenization, Architecture, Scheduling, and Inference[cite: 2].
-* **CUDA Optimized:** Uses `torch.amp.autocast`, fused AdamW, non-blocking page-locked host-to-device transfers, and numerical underflow guardrails[cite: 2].
-* **Vectorized Generation:** Batched greedy decoding and batched beam search decoding with cross-attention state caching[cite: 2].
-* **Config-Driven:** Fully parameterizable execution via TOML (`configs/transformer_config.toml`)[cite: 2].
+* **Strict OOP Modular Design:** Separation of concerns between Data, Tokenization, Architecture, Scheduling, and Inference.
+* **CUDA Optimized:** Uses `torch.amp.autocast`, fused AdamW, non-blocking page-locked host-to-device transfers, and numerical underflow guardrails.
+* **Vectorized Generation:** Batched greedy decoding and batched beam search decoding with cross-attention state caching.
+* **Config-Driven:** Fully parameterizable execution via TOML (`configs/transformer_config.toml`).
 
 ---
 
 ## Google Colab Setup & Execution
 
-Run these commands in a Google Colab notebook with a GPU runtime (T4, V100, or A100) enabled[cite: 2].
+Run these commands in a Google Colab notebook with a GPU runtime (T4, V100, or A100) enabled.
 
 ### 1. Setup & Install
-Clone the repository and install the package in editable mode[cite: 2].
+Clone the repository and install the package in editable mode.
 ```bash
 # Verify GPU availability
 !nvidia-smi
