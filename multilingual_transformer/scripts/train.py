@@ -10,6 +10,7 @@ from multilingual_transformer.engine.decoder import TranslationGenerator
 from multilingual_transformer.engine.evaluator import TranslationEvaluator
 from multilingual_transformer.engine.trainer import Trainer
 from multilingual_transformer.models.transformer import MultilingualTransformer
+from pathlib import Path
 
 
 def print_stats_table(

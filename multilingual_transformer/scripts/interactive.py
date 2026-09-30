@@ -6,6 +6,8 @@ from multilingual_transformer.data.dataset import DataPipeline
 from multilingual_transformer.data.tokenizer import TokenizerManager
 from multilingual_transformer.engine.decoder import TranslationGenerator
 from multilingual_transformer.models.transformer import MultilingualTransformer
+from pathlib import Path
+
 
 def main():
 

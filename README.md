@@ -49,21 +49,12 @@ Clone the repository and install the package in editable mode.
 ```bash
 # # 1. Always start from the Colab root workspace
 %cd /content
-
-# # 2. Safely wipe the old directory
 !rm -rf multilingual_transformer
-
-# 3. Clone fresh
 !git clone https://github.com/harshad-inarkar/multilingual_transformer.git
-
-# 4. Enter the clean directory
 %cd multilingual_transformer
-
-# 5. Install
 !pip install -q -e .
 
-# Go to internal project dir
-%cd multilingual_transformer
+!mkdir -p work_dir
 
 ```
 
@@ -72,8 +63,9 @@ Clone the repository and install the package in editable mode.
 Execute the end-to-end pipeline using the default TOML configuration. This will download the dataset, train the tokenizers, run the training loop, calculate BLEU/chrF metrics, and save the best weights to the `checkpoints/` directory.
 
 ```bash
-!python scripts/train.py --config configs/transformer_config.toml
+%cd /content/multilingual_transformer/work_dir
 
+!python -m multilingual_transformer.scripts.train
 ```
 
 ### 3. Interactive Translation Widget
