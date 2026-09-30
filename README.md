@@ -6,10 +6,10 @@ High-performance, from-scratch Sequence-to-Sequence Transformer (Vaswani et al.,
 
 ## Project Specifications
 
-* **Languages:** Hindi_IITB, Hindi, Marathi, Bengali, Gujarati, Kannada, Malayalam, Odia, Punjabi, Tamil, Telugu, Assamese, Sanskrit
+* **Languages:** Hindi, Marathi, Bengali, Gujarati, Kannada, Malayalam, Odia, Punjabi, Tamil, Telugu, Assamese, Sanskrit
 * **Datasets:**
-  * Hindi_IITB: `cfilt/iitb-english-hindi`
-  * Other 11 languages: `ai4bharat/samanantar` (IITM)
+  * Hindi: `cfilt/iitb-english-hindi`
+  * Indic 11 languages: `ai4bharat/samanantar` (IITM)
   * Sanskrit: `acomquest/Saamayik` (IITB)
 * **Tokenizers:** BPE, Unigram, WordPiece, Whitespace, Regex (Source and target languages can use different tokenizers)
 * **Vocabulary Size:** 22,400
