@@ -8,7 +8,7 @@ import yaml
 
 @dataclass
 class ProjectConfig:
-    name: str = "indic_transformer"
+    name: str = "multilingual_transformer"
     seed: int = 42
 
 

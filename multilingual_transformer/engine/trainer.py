@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
 from config import AppConfig
-from models.transformer import MultilingualTransformer, make_src_mask, make_tgt_mask
+from multilingual_transformer.models.transformer import MultilingualTransformer, make_src_mask, make_tgt_mask
 
 
 class Trainer:

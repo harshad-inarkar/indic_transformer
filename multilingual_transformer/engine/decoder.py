@@ -4,8 +4,8 @@ from typing import Any
 import torch
 import torch.nn.functional as F
 from torch import Tensor
-from data.dataset import numericalize, pad_sequence
-from models.transformer import MultilingualTransformer, make_src_mask, make_tgt_mask
+from multilingual_transformer.data.dataset import numericalize, pad_sequence
+from multilingual_transformer.models.transformer import MultilingualTransformer, make_src_mask, make_tgt_mask
 
 
 class TranslationGenerator:

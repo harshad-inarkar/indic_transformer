@@ -3,13 +3,13 @@ from __future__ import annotations
 import argparse
 import sys
 import torch
-from scripts.config import AppConfig
-from data.dataset import DataPipeline, TranslationDataset
-from data.tokenizer import TokenizerManager
-from engine.decoder import TranslationGenerator
-from engine.evaluator import TranslationEvaluator
-from engine.trainer import Trainer
-from models.transformer import MultilingualTransformer
+from multilingual_transformer.configs.config import AppConfig
+from multilingual_transformer.data.dataset import DataPipeline, TranslationDataset
+from multilingual_transformer.data.tokenizer import TokenizerManager
+from multilingual_transformer.engine.decoder import TranslationGenerator
+from multilingual_transformer.engine.evaluator import TranslationEvaluator
+from multilingual_transformer.engine.trainer import Trainer
+from multilingual_transformer.models.transformer import MultilingualTransformer
 
 
 def print_stats_table(

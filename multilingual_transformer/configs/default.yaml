@@ -20,7 +20,7 @@ data:
 
 tokenizer:
   algo_src: "wordpiece"   # "bpe", "unigram", "wordpiece", "whitespace", "regex"
-  algo_tgt: "unigram"
+  algo_tgt: "bpe"
   max_vocab_size: 22400
 
 model:

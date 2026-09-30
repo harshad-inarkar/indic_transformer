@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
 from nltk.translate.chrf_score import sentence_chrf
-from engine.decoder import TranslationGenerator
+from multilingual_transformer.engine.decoder import TranslationGenerator
 
 
 class TranslationEvaluator:

@@ -13,10 +13,10 @@ except ImportError:
     pass
 
 from config import AppConfig
-from data.dataset import DataPipeline
-from data.tokenizer import TokenizerManager
-from engine.decoder import TranslationGenerator
-from models.transformer import MultilingualTransformer
+from multilingual_transformer.data.dataset import DataPipeline
+from multilingual_transformer.data.tokenizer import TokenizerManager
+from multilingual_transformer.engine.decoder import TranslationGenerator
+from multilingual_transformer.models.transformer import MultilingualTransformer
 
 
 class TranslationWidget:
