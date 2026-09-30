@@ -2,6 +2,8 @@
 
 A from-scratch implementation of the Transformer (Vaswani et al., 2017) in PyTorch for **English → Indic machine translation**. Train one model per target language on public parallel corpora, then evaluate with BLEU and chrF and translate interactively with greedy or beam search decoding.
 
+Requires an NVIDIA GPU (CUDA). CPU-only execution is not supported.
+
 ## Features
 
 - Encoder-decoder Transformer built from scratch (no `nn.Transformer`)
@@ -148,14 +150,6 @@ multilingual_transformer/
 
 The package is organised into separate modules for data loading, tokenization, model architecture, learning-rate scheduling and inference.
 
-## Results
-
-Fill in after training. Test set: 10,000 held-out samples.
-
-| Language | Tokenizer | Decoding | BLEU | chrF |
-|---|---|---|---|---|
-| Hindi | BPE | Greedy | – | – |
-| Hindi | BPE | Beam | – | – |
 
 ## Troubleshooting
 
@@ -170,7 +164,9 @@ Fill in after training. Test set: 10,000 held-out samples.
 - Vaswani et al., [*Attention Is All You Need*](https://arxiv.org/abs/1706.03762), 2017
 - Ramesh et al., [*Samanantar: The Largest Publicly Available Parallel Corpora Collection for 11 Indic Languages*](https://arxiv.org/abs/2104.05596), 2021
 - Kunchukuttan et al., [*The IIT Bombay English-Hindi Parallel Corpus*](https://arxiv.org/abs/1710.02855), 2018
+- Ayush Maheshwari et al., [*Sāmayik: A Benchmark and Dataset for English-Sanskrit Translation*](https://arxiv.org/abs/2305.14004), 2024
+
 
 ## License
 
-Add a `LICENSE` file (MIT is a common choice) and state it here.
+The source code is released under the [MIT License](LICENSE).
