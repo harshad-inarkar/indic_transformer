@@ -6,12 +6,12 @@ from IPython.display import display
 import torch
 from pathlib import Path
 
-# Automatically enable Colab widget manager if running in Google Colab
-try:
-    from google.colab import output
-    output.enable_custom_widget_manager()
-except ImportError:
-    pass
+# # Automatically enable Colab widget manager if running in Google Colab
+# try:
+#     from google.colab import output
+#     output.enable_custom_widget_manager()
+# except ImportError:
+#     pass
 
 from multilingual_transformer.configs.config  import AppConfig
 from multilingual_transformer.data.dataset import DataPipeline
@@ -19,9 +19,6 @@ from multilingual_transformer.data.tokenizer import TokenizerManager
 from multilingual_transformer.engine.decoder import TranslationGenerator
 from multilingual_transformer.models.transformer import MultilingualTransformer
 
-
-
-default_config
 
 
 class TranslationWidget:
