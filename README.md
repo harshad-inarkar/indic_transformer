@@ -1,4 +1,4 @@
-# multilingual_transformer
+# Multilingual Transformer
 
 High-performance, from-scratch Sequence-to-Sequence Transformer (Vaswani et al., 2017) built with PyTorch, optimized exclusively for CUDA hardware. Supports English to 12+ Indic languages via Hugging Face parallel corpora (`ai4bharat/samanantar`, `cfilt/iitb-english-hindi`, `acomquest/Saamayik`).
 
@@ -68,9 +68,9 @@ Execute the end-to-end pipeline using the default TOML configuration. This will 
 !python -m multilingual_transformer.scripts.train
 ```
 
-### 3. Interactive Script
+### 3. Interactive Terminal REPL (Alternative)
 
-Test the transformer model with interactive script.
+If you prefer a pure text-based loop without UI widgets, you can run the interactive terminal script. Type your English sentences and get immediate greedy and beam search translations.
 
 ```bash
 %cd /content/multilingual_transformer/work_dir
@@ -90,15 +90,6 @@ Run this in a standard Python cell (not a bash cell):
 
 from multilingual_transformer.ui.widget import launch
 launch()
-
-```
-
-### 4. Interactive Terminal REPL (Alternative)
-
-If you prefer a pure text-based loop without UI widgets, you can run the interactive terminal script. Type your English sentences and get immediate greedy and beam search translations.
-
-```bash
-!python scripts/interactive.py --config configs/transformer_config.toml
 
 ```
 
