@@ -47,9 +47,6 @@ Run these commands in a Google Colab notebook with a GPU runtime (T4, V100, or A
 ### 1. Setup & Install
 Clone the repository and install the package in editable mode.
 ```bash
-# Verify GPU availability
-!nvidia-smi
-
 # # 1. Always start from the Colab root workspace
 %cd /content
 

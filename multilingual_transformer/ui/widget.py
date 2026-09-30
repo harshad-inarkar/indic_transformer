@@ -4,6 +4,7 @@ from pathlib import Path
 import ipywidgets as widgets
 from IPython.display import display
 import torch
+from pathlib import Path
 
 # Automatically enable Colab widget manager if running in Google Colab
 try:
@@ -17,6 +18,10 @@ from multilingual_transformer.data.dataset import DataPipeline
 from multilingual_transformer.data.tokenizer import TokenizerManager
 from multilingual_transformer.engine.decoder import TranslationGenerator
 from multilingual_transformer.models.transformer import MultilingualTransformer
+
+
+
+default_config
 
 
 class TranslationWidget:
@@ -54,10 +59,17 @@ class TranslationWidget:
         return widgets.VBox([text_box, method_dropdown, translate_btn, out])
 
 
-def launch(config_path: str = "configs/transformer_config.toml") -> widgets.VBox | None:
+def launch(config_path: str | None = None) -> widgets.VBox | None:
     """Loads trained checkpoint and renders the interactive widget in Colab/Jupyter."""
+    if config_path is None:
+        # Dynamically resolve relative to widget.py (ui/ -> parent is package root)
+        config_path = str(Path(__file__).resolve().parent.parent / "configs" / "transformer_config.toml")
+
+
     assert torch.cuda.is_available(), "CUDA device required. CPU execution is disabled."
     device = torch.device("cuda")
+
+
     cfg = AppConfig.from_toml(config_path)
 
     tag = cfg.language.lang_pair.lower().replace("-", "_")

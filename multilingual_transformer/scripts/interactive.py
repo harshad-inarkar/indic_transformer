@@ -8,8 +8,12 @@ from multilingual_transformer.engine.decoder import TranslationGenerator
 from multilingual_transformer.models.transformer import MultilingualTransformer
 
 def main():
+
+    script_dir = Path(__file__).resolve().parent
+    default_config = script_dir.parent / "configs" / "transformer_config.toml"
+
     parser = argparse.ArgumentParser(description="Interactive Translation Tester")
-    parser.add_argument("--config", type=str, default="configs/transformer_config.toml")
+    parser.add_argument("--config", type=str, default=default_config)
     args = parser.parse_args()
 
     cfg = AppConfig.from_toml(args.config)
