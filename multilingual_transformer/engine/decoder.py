@@ -17,13 +17,6 @@ class TranslationGenerator:
         max_len: int,
         device: torch.device,
     ) -> None:
-    
-        # Enable Multi-GPU Inference (specifically accelerates batched_beam_decode)
-        if torch.cuda.device_count() > 1 and device.type == "cuda":
-            self.model = nn.DataParallel(model).to(self.device)
-        else:
-            self.model = model.to(self.device)
-
 
         self.src_tok = src_tokenizer
         self.tgt_tok = tgt_tokenizer
@@ -33,6 +26,14 @@ class TranslationGenerator:
         self.pad_tgt = tgt_tokenizer.token_to_id("<pad>")
         self.sos_tgt = tgt_tokenizer.token_to_id("<sos>")
         self.eos_tgt = tgt_tokenizer.token_to_id("<eos>")
+
+
+        # Enable Multi-GPU Inference (specifically accelerates batched_beam_decode)
+        if torch.cuda.device_count() > 1 and device.type == "cuda":
+            self.model = nn.DataParallel(model).to(self.device)
+        else:
+            self.model = model.to(self.device)
+
 
     def _to_text(self, ids: list[int]) -> str:
         return self.tgt_tok.decode(ids, skip_special_tokens=True)
