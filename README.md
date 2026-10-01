@@ -93,7 +93,7 @@ Run from the same directory as training, because the checkpoint and tokenizers a
 
 ```python
 %cd /content/multilingual_transformer/work_dir
-python -m multilingual_transformer.scripts.interactive
+!python -m multilingual_transformer.scripts.interactive
 ```
 
 **5. Translate in the notebook**

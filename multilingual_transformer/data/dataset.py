@@ -108,7 +108,7 @@ class DataPipeline:
         return {name: self.data_dir / f"{name}_{tag}_{n}.jsonl" for name, n in sizes.items()}
 
     def _open_stream(self) -> Any:
-        kwargs: dict[str, Any] = dict(split="train", streaming=True, trust_remote_code=True)
+        kwargs: dict[str, Any] = dict(split="train", streaming=True)
         if self.dataset_name in ("cfilt/iitb-english-hindi", "acomquest/Saamayik"):
             ds = load_dataset(self.dataset_name, **kwargs)
         else:
