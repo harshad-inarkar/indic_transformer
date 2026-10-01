@@ -12,6 +12,7 @@ from multilingual_transformer.engine.evaluator import TranslationEvaluator
 from multilingual_transformer.engine.loader import build_model, fit_tokenizers
 from multilingual_transformer.engine.trainer import Trainer
 from multilingual_transformer.utils.helpers import free_memory, set_seed
+import random
 
 
 def print_stats_table(
@@ -113,6 +114,18 @@ def main() -> None:
 
     trainer = Trainer(model, cfg, tr_loader, val_loader, tok_src, tok_tgt)
     train_time, peak_mem, peak_res = trainer.fit()
+
+    sel = trainer.selected
+    mode = "best validation loss" if cfg.training.save_best else "latest epoch"
+    print("\n" + "=" * 70)
+    print("                    SELECTED CHECKPOINT")
+    print("=" * 70)
+    print(f"Selection Rule    : {mode} (save_best = {cfg.training.save_best})")
+    print(f"Checkpoint File   : {sel['path']}")
+    print(f"Epoch             : {sel['epoch']} / {cfg.training.epochs}")
+    print(f"Train Loss        : {sel['train_loss']:.4f}")
+    print(f"Val Loss          : {sel['val_loss']:.4f}")
+    print("=" * 70)
 
     # save_best=True evaluates the best-validation weights; otherwise the latest. Free training state first.
     trainer.restore()

@@ -29,6 +29,8 @@ class Trainer:
         self.train_loader = train_loader
         self.val_loader = val_loader
 
+        self.selected: dict[str, Any] = {}  # info about the checkpoint currently on disk
+
         # raw_model is always the plain module (used for saving/loading weights).
         self.raw_model = model.to(self.device)
         self.model: nn.Module = self.raw_model
@@ -127,9 +129,15 @@ class Trainer:
             if improved or not save_best:
                 # Always save the unwrapped module (loadable on a single GPU, no compile/DP prefixes).
                 torch.save(
-                    {"state_dict": self.raw_model.state_dict(), "loss": va_loss, "epoch": epoch},
+                    {
+                        "state_dict": self.raw_model.state_dict(),
+                        "loss": va_loss,
+                        "train_loss": tr_loss,
+                        "epoch": epoch,
+                    },
                     ckpt_path,
                 )
+                self.selected = {"epoch": epoch, "train_loss": tr_loss, "val_loss": va_loss, "path": ckpt_path}
             free_memory()
 
         total_time = time.time() - start_time

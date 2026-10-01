@@ -11,6 +11,7 @@ from multilingual_transformer.data.dataset import DataPipeline
 from multilingual_transformer.engine.decoder import TranslationGenerator
 from multilingual_transformer.engine.evaluator import TranslationEvaluator
 from multilingual_transformer.engine.loader import load_model, load_tokenizers
+import random
 
 
 def main() -> None:
