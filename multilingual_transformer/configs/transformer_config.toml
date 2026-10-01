@@ -56,7 +56,7 @@ algo_tgt = "unigram"
 max_vocab_size = 12800
 
 [model]
-d_model = 256
+d_model = 512
 num_layers = 4
 num_heads = 4
 d_ff = 1024
