@@ -51,16 +51,16 @@ force_download = false
 
 #bpe, unigram, wordpiece, whitespace, regex
 
-algo_src = "wordpiece"
-algo_tgt = "unigram"
-max_vocab_size = 12800
+algo_src = "bpe"
+algo_tgt = "bpe"
+max_vocab_size = 16000
 
 [model]
 d_model = 512
 num_layers = 4
 num_heads = 4
 d_ff = 1024
-dropout = 0.1
+dropout = 0.2
 
 [training]
 epochs = 10
@@ -74,13 +74,13 @@ bleu_sample = 1000     # number of test sentences used for BLEU/chrF
 save_best = false     # false: use latest checkpoint; true: use best-validation checkpoint
 
 [inference]
-sample_source = "test"   # "config" = sentences below, "test" = first num_samples test pairs
-num_samples = 10            # used when sample_source = "test"
+sample_source = "config"   # "config" = sentences below, "test" = first num_samples test pairs
+num_samples = 5            # used when sample_source = "test"
 sample_sentences = [
-    "farmer is important for the country",
+    "farmer is important to the country",
     "education is essential for every child",
     "they are going to school",
     "She is smart girl",
-    "he is a great teacher"
+    "he is a great teacher",
 ]
 
