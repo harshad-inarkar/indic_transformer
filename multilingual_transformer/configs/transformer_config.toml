@@ -43,7 +43,7 @@ tokenizer_dir = "processed_tokenizers"
 train_size = 50000
 val_size = 5000    # per-epoch validation loss
 test_size = 5000   # final BLEU/chrF and test samples
-max_len = 80
+max_len = 128
 max_length_ratio = 5.0
 force_download = false
 
@@ -53,25 +53,25 @@ force_download = false
 
 algo_src = "wordpiece"
 algo_tgt = "bpe"
-max_vocab_size = 16000
+max_vocab_size = 8000
 
 [model]
 d_model = 512
 num_layers = 4
 num_heads = 4
 d_ff = 1024
-dropout = 0.1
+dropout = 0.2
 
 [training]
 epochs = 10
-batch_size = 224
+batch_size = 256
 lr = 5.0e-4
 weight_decay = 0.01
 label_smoothing = 0.1
 torch_compile = false
-gen_batch_size = 128
-bleu_sample = 1000     # number of test sentences used for BLEU/chrF
-save_best = false     # false: use latest checkpoint; true: use best-validation checkpoint
+gen_batch_size = 256
+bleu_sample = 3000     # number of test sentences used for BLEU/chrF
+save_best = true     # false: use latest checkpoint; true: use best-validation checkpoint
 
 [inference]
 sample_source = "config"   # "config" = sentences below, "test" = first num_samples test pairs
