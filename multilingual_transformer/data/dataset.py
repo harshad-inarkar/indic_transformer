@@ -103,12 +103,9 @@ class DataPipeline:
         self.seed = seed
 
     # ---- corpus acquisition ----
-    def _cache_paths(self, train_size: int, test_size: int) -> tuple[Path, Path]:
+    def _cache_paths(self, sizes: dict[str, int]) -> dict[str, Path]:
         tag = self.lang_pair.lower().replace("-", "_")
-        return (
-            self.data_dir / f"train_{tag}_{train_size}.jsonl",
-            self.data_dir / f"test_{tag}_{test_size}.jsonl",
-        )
+        return {name: self.data_dir / f"{name}_{tag}_{n}.jsonl" for name, n in sizes.items()}
 
     def _open_stream(self) -> Any:
         kwargs: dict[str, Any] = dict(split="train", streaming=True, trust_remote_code=True)
@@ -128,18 +125,23 @@ class DataPipeline:
         return str(rec.get(self.src_lang, "")).strip(), str(rec.get(self.tgt_lang, "")).strip()
 
     def acquire_corpus(
-        self, train_size: int, test_size: int, force_download: bool = False
-    ) -> tuple[list[str], list[str], list[str], list[str]]:
-        train_path, test_path = self._cache_paths(train_size, test_size)
-        if not force_download and train_path.exists() and test_path.exists():
-            return (*self._load_jsonl(train_path), *self._load_jsonl(test_path))
+        self, train_size: int, val_size: int, test_size: int, force_download: bool = False
+    ) -> tuple[list[str], list[str], list[str], list[str], list[str], list[str]]:
+        """Returns (train_src, train_tgt, val_src, val_tgt, test_src, test_tgt); the three splits are disjoint."""
+        sizes = {"train": train_size, "val": val_size, "test": test_size}
+        paths = self._cache_paths(sizes)
+        if not force_download and all(p.exists() for p in paths.values()):
+            out: list[list[str]] = []
+            for p in paths.values():
+                out.extend(self._load_jsonl(p))
+            return tuple(out)  # type: ignore[return-value]
 
-        total = train_size + test_size
+        total = sum(sizes.values())
         ds = self._open_stream()
 
         src: list[str] = []
         tgt: list[str] = []
-        seen: set[str] = set()  # de-duplicate on source so train/test cannot leak
+        seen: set[str] = set()  # de-duplicate on source so splits cannot leak into each other
         print(f"Streaming and filtering {total:,} random clean pairs from {self.dataset_name}...")
 
         with tqdm(total=total, desc="Extracting Pairs") as pbar:
@@ -156,14 +158,18 @@ class DataPipeline:
                     break
         del seen, ds
 
-        split_idx = int(len(src) * (train_size / total))
-        train_src, train_tgt = src[:split_idx], tgt[:split_idx]
-        test_src, test_tgt = src[split_idx:], tgt[split_idx:]
+        # Sequential disjoint slices; scaled proportionally if the stream yielded fewer pairs than requested.
+        bounds, cum = [0], 0
+        for n in sizes.values():
+            cum += n
+            bounds.append(int(len(src) * cum / total))
+        out = []
+        for name, lo, hi in zip(sizes, bounds[:-1], bounds[1:]):
+            s_part, t_part = src[lo:hi], tgt[lo:hi]
+            self._save_jsonl(paths[name], s_part, t_part)
+            out.extend([s_part, t_part])
         del src, tgt
-
-        self._save_jsonl(train_path, train_src, train_tgt)
-        self._save_jsonl(test_path, test_src, test_tgt)
-        return train_src, train_tgt, test_src, test_tgt
+        return tuple(out)  # type: ignore[return-value]
 
     @staticmethod
     def _save_jsonl(path: Path, src: list[str], tgt: list[str]) -> None:

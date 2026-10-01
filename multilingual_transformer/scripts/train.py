@@ -38,7 +38,7 @@ def print_stats_table(
     print(f"Model Parameters  : {n_params:,} ({n_params * 4 / 1024**2:.1f} MB fp32)")
     print("-" * 70)
     print(f"Epochs            : {config.training.epochs}")
-    print(f"Train / Val Size  : {config.data.train_size:,} / {config.data.test_size:,}")
+    print(f"Train/Val/Test    : {config.data.train_size:,} / {config.data.val_size:,} / {config.data.test_size:,}")
     print(f"Batch Size        : {config.training.batch_size} (Train) | {config.training.gen_batch_size} (Eval)")
     print(f"Steps per Epoch   : {train_loader_len:,}")
     print(f"Total Train Time  : {total_time / 60:.2f} minutes")
@@ -70,7 +70,10 @@ def main() -> None:
     print(f"Tokenizers   : SRC = {cfg.tokenizer.algo_src.upper()} | TGT = {cfg.tokenizer.algo_tgt.upper()}")
     print(f"Epochs       : {cfg.training.epochs}")
     print(f"Train Size   : {cfg.data.train_size}")
+    print(f"Val Size     : {cfg.data.val_size}")
     print(f"Test Size    : {cfg.data.test_size}")
+    print(f"Save Best    : {cfg.training.save_best} ({'best-val' if cfg.training.save_best else 'latest'} checkpoint)")
+    print(f"Samples From : {cfg.inference.sample_source}")
     print("=" * 50 + "\n")
 
     set_seed(cfg.project.seed)
@@ -87,8 +90,8 @@ def main() -> None:
         max_ratio=cfg.data.max_length_ratio,
         seed=cfg.project.seed,
     )
-    tr_src, tr_tgt, val_src, val_tgt = pipeline.acquire_corpus(
-        cfg.data.train_size, cfg.data.test_size, cfg.data.force_download
+    tr_src, tr_tgt, val_src, val_tgt, te_src, te_tgt = pipeline.acquire_corpus(
+        cfg.data.train_size, cfg.data.val_size, cfg.data.test_size, cfg.data.force_download
     )
 
     print("Training tokenizers...")
@@ -96,7 +99,7 @@ def main() -> None:
 
     tr_ds = TranslationDataset(tr_src, tr_tgt, tok_src, tok_tgt, cfg.data.max_len)
     val_ds = TranslationDataset(val_src, val_tgt, tok_src, tok_tgt, cfg.data.max_len)
-    del tr_src, tr_tgt  # raw train text is no longer needed once tokenised
+    del tr_src, tr_tgt, val_src, val_tgt  # raw train/val text is no longer needed once tokenised
 
     tr_loader = pipeline.create_loader(tr_ds, cfg.training.batch_size, shuffle=True)
     val_loader = pipeline.create_loader(val_ds, cfg.training.batch_size, shuffle=False)
@@ -109,8 +112,8 @@ def main() -> None:
     trainer = Trainer(model, cfg, tr_loader, val_loader, tok_src, tok_tgt)
     train_time, peak_mem, peak_res = trainer.fit()
 
-    # Evaluate the best-validation weights, not the last epoch's, and free training state first.
-    trainer.load_best()
+    # save_best=True evaluates the best-validation weights; otherwise the latest. Free training state first.
+    trainer.restore()
     trainer.release()
     del trainer, tr_loader, val_loader, tr_ds, val_ds
     free_memory()
@@ -120,10 +123,10 @@ def main() -> None:
     gen_bs = cfg.training.gen_batch_size
 
     bleu_greedy, chrf_greedy, _ = evaluator.evaluate(
-        val_src, val_tgt, method="greedy", batch_size=gen_bs, sample_size=cfg.training.bleu_sample
+        te_src, te_tgt, method="greedy", batch_size=gen_bs, sample_size=cfg.training.bleu_sample
     )
     bleu_beam, chrf_beam, _ = evaluator.evaluate(
-        val_src, val_tgt, method="beam", beam_size=5, batch_size=gen_bs, sample_size=cfg.training.bleu_sample
+        te_src, te_tgt, method="beam", beam_size=5, batch_size=gen_bs, sample_size=cfg.training.bleu_sample
     )
 
     print_stats_table(
@@ -141,12 +144,22 @@ def main() -> None:
         tok_tgt.get_vocab_size(),
     )
 
-    print(f"=== Config Sample Translations ({cfg.language.lang_pair}) ===")
-    sentences = cfg.inference.sample_sentences
+    if cfg.inference.sample_source == "test":
+        sentences = te_src[: cfg.inference.num_samples]
+        refs: list[str] | None = te_tgt[: cfg.inference.num_samples]
+        title = "Test"
+    else:
+        sentences = cfg.inference.sample_sentences
+        refs = None
+        title = "Config"
+
+    print(f"=== {title} Sample Translations ({cfg.language.lang_pair}) ===")
     greedy_preds = generator.batched_greedy_decode(sentences)
     beam_preds = generator.batched_beam_decode(sentences, beam_size=5)
     for i, (sent, g_pred, b_pred) in enumerate(zip(sentences, greedy_preds, beam_preds), 1):
         print(f"[{i}] EN   : {sent}")
+        if refs is not None:
+            print(f"    Ref    : {refs[i - 1]}")
         print(f"    Greedy : {g_pred}")
         print(f"    Beam   : {b_pred}\n")
 

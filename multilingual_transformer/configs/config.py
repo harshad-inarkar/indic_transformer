@@ -60,7 +60,8 @@ class DataConfig:
     checkpoint_dir: Path = Path("checkpoints")
     tokenizer_dir: Path = Path("tokenizers")
     train_size: int = 50000
-    test_size: int = 10000
+    val_size: int = 5000
+    test_size: int = 5000
     max_len: int = 80
     max_length_ratio: float = 6.0
     force_download: bool = False
@@ -97,11 +98,19 @@ class TrainingConfig:
     torch_compile: bool = False
     gen_batch_size: int = 128
     bleu_sample: int = 300
+    save_best: bool = False  # True: keep best-val checkpoint; False: keep latest
 
 
 @dataclass
 class InferenceConfig:
     sample_sentences: list[str] = field(default_factory=list)
+    sample_source: str = "config"  # "config" = sample_sentences above, "test" = first N test pairs
+    num_samples: int = 5  # used when sample_source = "test"
+
+    def __post_init__(self) -> None:
+        self.sample_source = self.sample_source.lower()
+        if self.sample_source not in ("config", "test"):
+            raise ValueError("inference.sample_source must be 'config' or 'test'")
 
 
 @dataclass
@@ -144,7 +153,8 @@ class AppConfig:
 
     # ---- shared artifact paths (single source of truth) ----
     def checkpoint_path(self) -> Path:
-        return self.data.checkpoint_dir / f"transformer_{self.language.tag}_best.pt"
+        kind = "best" if self.training.save_best else "last"
+        return self.data.checkpoint_dir / f"transformer_{self.language.tag}_{kind}.pt"
 
     def tokenizer_path(self, side: str) -> Path:
         algo = self.tokenizer.algo_src if side == "src" else self.tokenizer.algo_tgt

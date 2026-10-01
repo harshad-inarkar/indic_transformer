@@ -107,8 +107,9 @@ class Trainer:
     def fit(self) -> tuple[float, float, float]:
         torch.cuda.reset_peak_memory_stats()
         best_loss = float("inf")
-        best_path = self.config.checkpoint_path()
-        best_path.parent.mkdir(parents=True, exist_ok=True)
+        save_best = self.config.training.save_best
+        ckpt_path = self.config.checkpoint_path()
+        ckpt_path.parent.mkdir(parents=True, exist_ok=True)
 
         start_time = time.time()
         for epoch in range(1, self.config.training.epochs + 1):
@@ -119,12 +120,15 @@ class Trainer:
             m, s = divmod(elapsed, 60)
             print(f"Epoch {epoch:2d}/{self.config.training.epochs} | Time: {m}m {s:02d}s | Train Loss: {tr_loss:.4f} | Val Loss: {va_loss:.4f}")
 
-            if va_loss < best_loss:
+            improved = va_loss < best_loss
+            if improved:
                 best_loss = va_loss
+            # save_best=True: only on improvement. save_best=False: every epoch (latest wins).
+            if improved or not save_best:
                 # Always save the unwrapped module (loadable on a single GPU, no compile/DP prefixes).
                 torch.save(
-                    {"state_dict": self.raw_model.state_dict(), "loss": best_loss, "epoch": epoch},
-                    best_path,
+                    {"state_dict": self.raw_model.state_dict(), "loss": va_loss, "epoch": epoch},
+                    ckpt_path,
                 )
             free_memory()
 
@@ -133,8 +137,10 @@ class Trainer:
         peak_res = torch.cuda.max_memory_reserved() / 1e9
         return total_time, peak_mem, peak_res
 
-    def load_best(self) -> None:
-        """Restore the best-validation checkpoint (the in-memory weights are from the last epoch)."""
+    def restore(self) -> None:
+        """save_best=True: reload the best-validation weights. Otherwise the in-memory weights are already the latest."""
+        if not self.config.training.save_best:
+            return
         path = self.config.checkpoint_path()
         if path.exists():
             ckpt = torch.load(path, map_location="cpu", weights_only=True)
