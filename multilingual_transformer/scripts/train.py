@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 import argparse
-import sys
+from pathlib import Path
+
 import torch
+
 from multilingual_transformer.configs.config import AppConfig
 from multilingual_transformer.data.dataset import DataPipeline, TranslationDataset
-from multilingual_transformer.data.tokenizer import TokenizerManager
 from multilingual_transformer.engine.decoder import TranslationGenerator
 from multilingual_transformer.engine.evaluator import TranslationEvaluator
+from multilingual_transformer.engine.loader import build_model, fit_tokenizers
 from multilingual_transformer.engine.trainer import Trainer
-from multilingual_transformer.models.transformer import MultilingualTransformer
-from pathlib import Path
-from multilingual_transformer.utils.helpers import set_seed, free_memory
+from multilingual_transformer.utils.helpers import free_memory, set_seed
 
 
 def print_stats_table(
@@ -31,7 +31,7 @@ def print_stats_table(
     print("\n" + "=" * 70)
     print("              CONSOLIDATED FINAL STATISTICS")
     print("=" * 70)
-    print(f"Target Language   : {config.language.target_language} ({config.language.tgt_lang})")
+    print(f"Target Language   : {config.language.target_lang} ({config.language.tgt_lang})")
     print(f"Dataset Source    : {config.language.dataset_name}")
     print(f"Tokenizers Used   : SRC = {config.tokenizer.algo_src.upper()} | TGT = {config.tokenizer.algo_tgt.upper()}")
     print(f"Vocab Sizes       : SRC = {src_vocab_sz:,} | TGT = {tgt_vocab_sz:,}")
@@ -59,39 +59,32 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Multilingual Transformer Engine")
     parser.add_argument("--config", type=str, default=str(default_config))
     args = parser.parse_args()
-    
 
     cfg = AppConfig.from_toml(args.config)
 
-
-    # --- NEW: Print Key Config Information at Start ---
     print("\n" + "=" * 50)
     print("          INITIALIZING TRAINING PIPELINE")
     print("=" * 50)
     print(f"Dataset Name : {cfg.language.dataset_name}")
-    print(f"Language     : {cfg.language.target_language} ({cfg.language.tgt_lang})")
+    print(f"Language     : {cfg.language.target_lang} ({cfg.language.tgt_lang})")
     print(f"Tokenizers   : SRC = {cfg.tokenizer.algo_src.upper()} | TGT = {cfg.tokenizer.algo_tgt.upper()}")
     print(f"Epochs       : {cfg.training.epochs}")
     print(f"Train Size   : {cfg.data.train_size}")
     print(f"Test Size    : {cfg.data.test_size}")
-
-
     print("=" * 50 + "\n")
 
-
     set_seed(cfg.project.seed)
-
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.benchmark = True
 
     pipeline = DataPipeline(
         dataset_name=cfg.language.dataset_name,
+        src_lang=cfg.language.src_code,
         tgt_lang=cfg.language.tgt_lang,
         lang_pair=cfg.language.lang_pair,
         data_dir=cfg.data.data_dir,
         max_len=cfg.data.max_len,
         max_ratio=cfg.data.max_length_ratio,
-        oversample=cfg.data.oversample,
         seed=cfg.project.seed,
     )
     tr_src, tr_tgt, val_src, val_tgt = pipeline.acquire_corpus(
@@ -99,46 +92,44 @@ def main() -> None:
     )
 
     print("Training tokenizers...")
-    tok_src = TokenizerManager.train(tr_src, cfg.tokenizer.algo_src, cfg.tokenizer.max_vocab_size)
-    tok_tgt = TokenizerManager.train(tr_tgt, cfg.tokenizer.algo_tgt, cfg.tokenizer.max_vocab_size)
+    tok_src, tok_tgt = fit_tokenizers(cfg, tr_src, tr_tgt)
 
     tr_ds = TranslationDataset(tr_src, tr_tgt, tok_src, tok_tgt, cfg.data.max_len)
     val_ds = TranslationDataset(val_src, val_tgt, tok_src, tok_tgt, cfg.data.max_len)
+    del tr_src, tr_tgt  # raw train text is no longer needed once tokenised
 
     tr_loader = pipeline.create_loader(tr_ds, cfg.training.batch_size, shuffle=True)
     val_loader = pipeline.create_loader(val_ds, cfg.training.batch_size, shuffle=False)
-
+    steps_per_epoch = len(tr_loader)
     free_memory()
 
-    model = MultilingualTransformer(
-        src_vocab_size=tok_src.get_vocab_size(),
-        tgt_vocab_size=tok_tgt.get_vocab_size(),
-        max_len=cfg.data.max_len,
-        d_model=cfg.model.d_model,
-        num_layers=cfg.model.num_layers,
-        num_heads=cfg.model.num_heads,
-        d_ff=cfg.model.d_ff,
-        dropout=cfg.model.dropout,
-    )
+    model = build_model(cfg, tok_src, tok_tgt)
     n_params = sum(p.numel() for p in model.parameters())
 
     trainer = Trainer(model, cfg, tr_loader, val_loader, tok_src, tok_tgt)
     train_time, peak_mem, peak_res = trainer.fit()
 
+    # Evaluate the best-validation weights, not the last epoch's, and free training state first.
+    trainer.load_best()
+    trainer.release()
+    del trainer, tr_loader, val_loader, tr_ds, val_ds
+    free_memory()
+
     generator = TranslationGenerator(model, tok_src, tok_tgt, cfg.data.max_len, torch.device("cuda"))
     evaluator = TranslationEvaluator(generator)
+    gen_bs = cfg.training.gen_batch_size
 
     bleu_greedy, chrf_greedy, _ = evaluator.evaluate(
-        val_src, val_tgt, method="greedy", sample_size=cfg.training.bleu_sample
+        val_src, val_tgt, method="greedy", batch_size=gen_bs, sample_size=cfg.training.bleu_sample
     )
     bleu_beam, chrf_beam, _ = evaluator.evaluate(
-        val_src, val_tgt, method="beam", beam_size=5, sample_size=cfg.training.bleu_sample
+        val_src, val_tgt, method="beam", beam_size=5, batch_size=gen_bs, sample_size=cfg.training.bleu_sample
     )
 
     print_stats_table(
         cfg,
         n_params,
-        len(tr_loader),
+        steps_per_epoch,
         train_time,
         peak_mem,
         peak_res,
@@ -151,9 +142,10 @@ def main() -> None:
     )
 
     print(f"=== Config Sample Translations ({cfg.language.lang_pair}) ===")
-    for i, sent in enumerate(cfg.inference.sample_sentences, 1):
-        g_pred = generator.greedy_decode(sent)
-        b_pred = generator.batched_beam_decode([sent], beam_size=5)[0]
+    sentences = cfg.inference.sample_sentences
+    greedy_preds = generator.batched_greedy_decode(sentences)
+    beam_preds = generator.batched_beam_decode(sentences, beam_size=5)
+    for i, (sent, g_pred, b_pred) in enumerate(zip(sentences, greedy_preds, beam_preds), 1):
         print(f"[{i}] EN   : {sent}")
         print(f"    Greedy : {g_pred}")
         print(f"    Beam   : {b_pred}\n")

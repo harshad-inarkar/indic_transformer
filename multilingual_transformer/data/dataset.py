@@ -1,37 +1,59 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import Any
+
 import torch
 from datasets import load_dataset
 from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm
 
+# Which target-language codes each known dataset provides (source is always English).
+DATASET_LANGS: dict[str, set[str]] = {
+    "cfilt/iitb-english-hindi": {"hi"},
+    "acomquest/Saamayik": {"sa"},
+    "ai4bharat/samanantar": {"as", "bn", "gu", "hi", "kn", "ml", "mr", "or", "pa", "ta", "te"},
+}
+
 
 def is_clean_pair(en: str, tgt: str, max_len: int, max_ratio: float) -> bool:
-    en_toks, tgt_toks = en.split(), tgt.split()
-    n_en, n_tgt = len(en_toks), len(tgt_toks)
+    n_en, n_tgt = len(en.split()), len(tgt.split())
     if n_en < 3 or n_tgt < 3 or n_en > max_len - 2 or n_tgt > max_len - 2:
         return False
     return (max(n_en, n_tgt) / max(min(n_en, n_tgt), 1)) <= max_ratio
 
 
-def numericalize(text: str, tokenizer: Any) -> list[int]:
-    encoded = tokenizer.encode(text.lower())
+def numericalize_batch(texts: list[str], tokenizer: Any, max_len: int) -> list[list[int]]:
+    """Batch-encode (Rust-parallel) to <sos> ids <eos>, truncating so <eos> is never lost."""
     sos_id = tokenizer.token_to_id("<sos>")
     eos_id = tokenizer.token_to_id("<eos>")
-    return [sos_id] + encoded.ids + [eos_id]
+    encoded = tokenizer.encode_batch([t.lower() for t in texts])
+    return [[sos_id] + e.ids[: max_len - 2] + [eos_id] for e in encoded]
 
 
-def pad_sequence(seq: list[int], max_len: int, pad_idx: int) -> Tensor:
-    seq = seq[:max_len]
-    return torch.tensor(seq + [pad_idx] * (max_len - len(seq)), dtype=torch.long)
+def pad_batch(seqs: list[list[int]], pad_idx: int) -> Tensor:
+    """Pad to the longest sequence in the batch (dynamic padding)."""
+    out = torch.full((len(seqs), max(len(s) for s in seqs)), pad_idx, dtype=torch.long)
+    for i, s in enumerate(seqs):
+        out[i, : len(s)] = torch.tensor(s, dtype=torch.long)
+    return out
 
 
-class TranslationDataset(Dataset[tuple[Tensor, Tensor]]):
+class PadCollator:
+    def __init__(self, pad_src: int, pad_tgt: int) -> None:
+        self.pad_src = pad_src
+        self.pad_tgt = pad_tgt
+
+    def __call__(self, batch: list[tuple[list[int], list[int]]]) -> tuple[Tensor, Tensor]:
+        src, tgt = zip(*batch)
+        return pad_batch(list(src), self.pad_src), pad_batch(list(tgt), self.pad_tgt)
+
+
+class TranslationDataset(Dataset):
+    """Pre-tokenises once at construction; raw text is not kept (saves memory and per-step work)."""
+
     def __init__(
         self,
         src_texts: list[str],
@@ -40,121 +62,135 @@ class TranslationDataset(Dataset[tuple[Tensor, Tensor]]):
         tgt_tokenizer: Any,
         max_len: int,
     ) -> None:
-        self.src_texts = src_texts
-        self.tgt_texts = tgt_texts
-        self.src_tok = src_tokenizer
-        self.tgt_tok = tgt_tokenizer
-        self.max_len = max_len
+        self.src_ids = numericalize_batch(src_texts, src_tokenizer, max_len)
+        self.tgt_ids = numericalize_batch(tgt_texts, tgt_tokenizer, max_len)
         self.pad_src = src_tokenizer.token_to_id("<pad>")
         self.pad_tgt = tgt_tokenizer.token_to_id("<pad>")
 
     def __len__(self) -> int:
-        return len(self.src_texts)
+        return len(self.src_ids)
 
-    def __getitem__(self, idx: int) -> tuple[Tensor, Tensor]:
-        src_ids = numericalize(self.src_texts[idx], self.src_tok)
-        tgt_ids = numericalize(self.tgt_texts[idx], self.tgt_tok)
-        return (
-            pad_sequence(src_ids, self.max_len, self.pad_src),
-            pad_sequence(tgt_ids, self.max_len, self.pad_tgt),
-        )
+    def __getitem__(self, idx: int) -> tuple[list[int], list[int]]:
+        return self.src_ids[idx], self.tgt_ids[idx]
 
 
 class DataPipeline:
     def __init__(
         self,
         dataset_name: str,
+        src_lang: str,
         tgt_lang: str,
         lang_pair: str,
         data_dir: Path,
         max_len: int,
         max_ratio: float,
-        oversample: int,
         seed: int,
     ) -> None:
+        if src_lang != "en":
+            raise ValueError("All supported datasets have English as the source language.")
+        supported = DATASET_LANGS.get(dataset_name)
+        if supported is not None and tgt_lang not in supported:
+            raise ValueError(
+                f"Dataset '{dataset_name}' does not provide '{tgt_lang}'. Supported: {sorted(supported)}"
+            )
         self.dataset_name = dataset_name
+        self.src_lang = src_lang
         self.tgt_lang = tgt_lang
         self.lang_pair = lang_pair
         self.data_dir = data_dir
         self.max_len = max_len
         self.max_ratio = max_ratio
-        self.oversample = oversample
         self.seed = seed
 
-    def acquire_corpus(self, train_size: int, test_size: int, force_download: bool = False) -> tuple[list[str], list[str], list[str], list[str]]:
+    # ---- corpus acquisition ----
+    def _cache_paths(self, train_size: int, test_size: int) -> tuple[Path, Path]:
         tag = self.lang_pair.lower().replace("-", "_")
-        train_path = self.data_dir / f"train_{tag}.jsonl"
-        test_path = self.data_dir / f"test_{tag}.jsonl"
+        return (
+            self.data_dir / f"train_{tag}_{train_size}.jsonl",
+            self.data_dir / f"test_{tag}_{test_size}.jsonl",
+        )
 
+    def _open_stream(self) -> Any:
+        kwargs: dict[str, Any] = dict(split="train", streaming=True, trust_remote_code=True)
+        if self.dataset_name in ("cfilt/iitb-english-hindi", "acomquest/Saamayik"):
+            ds = load_dataset(self.dataset_name, **kwargs)
+        else:
+            ds = load_dataset(self.dataset_name, self.tgt_lang, **kwargs)
+        return ds.shuffle(seed=self.seed, buffer_size=10_000)
+
+    def _extract_pair(self, row: dict[str, Any]) -> tuple[str, str]:
+        if self.dataset_name == "cfilt/iitb-english-hindi":
+            rec = row["translation"]
+        elif self.dataset_name == "acomquest/Saamayik":
+            rec = row.get("translation", row)
+        else:  # samanantar-style: {"src": ..., "tgt": ...}
+            return str(row["src"]).strip(), str(row["tgt"]).strip()
+        return str(rec.get(self.src_lang, "")).strip(), str(rec.get(self.tgt_lang, "")).strip()
+
+    def acquire_corpus(
+        self, train_size: int, test_size: int, force_download: bool = False
+    ) -> tuple[list[str], list[str], list[str], list[str]]:
+        train_path, test_path = self._cache_paths(train_size, test_size)
         if not force_download and train_path.exists() and test_path.exists():
             return (*self._load_jsonl(train_path), *self._load_jsonl(test_path))
 
         total = train_size + test_size
+        ds = self._open_stream()
 
-        if self.dataset_name in ("cfilt/iitb-english-hindi", "acomquest/Saamayik"):
-            ds = load_dataset(self.dataset_name, split="train", streaming=True, trust_remote_code=True)
-        else:
-            ds = load_dataset(self.dataset_name, self.tgt_lang, split="train", streaming=True, trust_remote_code=True)
-
-        ds = ds.shuffle(seed=self.seed, buffer_size=10_000)
-
-        src, tgt = [], []
+        src: list[str] = []
+        tgt: list[str] = []
+        seen: set[str] = set()  # de-duplicate on source so train/test cannot leak
         print(f"Streaming and filtering {total:,} random clean pairs from {self.dataset_name}...")
 
-        # Wrap the extraction in a tqdm progress bar
         with tqdm(total=total, desc="Extracting Pairs") as pbar:
             for row in ds:
-                if self.dataset_name == "cfilt/iitb-english-hindi":
-                    en = row["translation"]["en"].strip()
-                    tg = row["translation"]["hi"].strip()
-                elif self.dataset_name == "acomquest/Saamayik":
-                    rec = row.get("translation", row)
-                    en = str(rec.get("en", "")).strip()
-                    tg = str(rec.get("sa", "")).strip()
-                else:
-                    en = row["src"].strip()
-                    tg = row["tgt"].strip()
-
-                if is_clean_pair(en, tg, self.max_len, self.max_ratio):
-                    src.append(en)
-                    tgt.append(tg)
-                    pbar.update(1)  # Advance the progress bar by 1
-                
+                en, tg = self._extract_pair(row)
+                key = en.lower()
+                if key in seen or not is_clean_pair(en, tg, self.max_len, self.max_ratio):
+                    continue
+                seen.add(key)
+                src.append(en)
+                tgt.append(tg)
+                pbar.update(1)
                 if len(src) >= total:
                     break
+        del seen, ds
 
         split_idx = int(len(src) * (train_size / total))
         train_src, train_tgt = src[:split_idx], tgt[:split_idx]
         test_src, test_tgt = src[split_idx:], tgt[split_idx:]
+        del src, tgt
 
         self._save_jsonl(train_path, train_src, train_tgt)
         self._save_jsonl(test_path, test_src, test_tgt)
         return train_src, train_tgt, test_src, test_tgt
 
-    def _save_jsonl(self, path: Path, src: list[str], tgt: list[str]) -> None:
+    @staticmethod
+    def _save_jsonl(path: Path, src: list[str], tgt: list[str]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w", encoding="utf-8") as fh:
             for s, t in zip(src, tgt):
-                fh.write(json.dumps({"en": s, "tgt": t}, ensure_ascii=False) + "\n")
+                fh.write(json.dumps({"src": s, "tgt": t}, ensure_ascii=False) + "\n")
 
-    def _load_jsonl(self, path: Path) -> tuple[list[str], list[str]]:
+    @staticmethod
+    def _load_jsonl(path: Path) -> tuple[list[str], list[str]]:
         src, tgt = [], []
         with path.open("r", encoding="utf-8") as fh:
             for line in fh:
                 if line.strip():
                     item = json.loads(line)
-                    src.append(item["en"])
+                    src.append(item.get("src", item.get("en")))
                     tgt.append(item["tgt"])
         return src, tgt
 
     @staticmethod
-    def create_loader(dataset: Dataset, batch_size: int, shuffle: bool) -> DataLoader:
-        workers = min(4, os.cpu_count() or 2)
+    def create_loader(dataset: TranslationDataset, batch_size: int, shuffle: bool) -> DataLoader:
+        # Data is pre-tokenised, so collation is trivial: no worker processes needed.
         return DataLoader(
             dataset,
             batch_size=batch_size,
             shuffle=shuffle,
-            pin_memory=True,
-            num_workers=workers,
-            persistent_workers=workers > 0,
+            pin_memory=torch.cuda.is_available(),
+            num_workers=0,
+            collate_fn=PadCollator(dataset.pad_src, dataset.pad_tgt),
         )

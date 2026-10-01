@@ -7,18 +7,22 @@ name = "multilingual_transformer"
 version = "0.1.0"
 description = "High-performance PyTorch multilingual transformer trained from scratch for Indic languages"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 dependencies = [
-    "torch",
+    "torch>=2.3",
     "tokenizers",
-    "transformers",
-    "datasets",
+    # Samanantar / Saamayik are script-based datasets; datasets>=4 dropped trust_remote_code.
+    "datasets>=2.18,<4",
     "nltk",
-    "pyyaml",
+    "numpy",
     "tqdm",
     "ipywidgets",
-    "tomli"
+    "tomli; python_version < '3.11'",
 ]
 
 [tool.setuptools.packages.find]
 where = ["."]
+include = ["multilingual_transformer*"]
+
+[tool.setuptools.package-data]
+multilingual_transformer = ["configs/*.toml"]

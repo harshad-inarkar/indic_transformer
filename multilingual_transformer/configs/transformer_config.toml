@@ -2,20 +2,21 @@
 name = "multilingual_transformer"
 seed = 42
 
+# Only these three keys are needed. Language codes (tgt_lang) and lang_pair
+# (e.g. "EN-HI") are derived from configs/language_config.toml.
 [language]
-target_language = "Hindi"
+src_lang = "English"
+target_lang = "Hindi"
 dataset_name = "ai4bharat/samanantar"
-tgt_lang = "hi"
-lang_pair = "EN-HI"
 
 [data]
 data_dir = "data"
 checkpoint_dir = "checkpoints"
+tokenizer_dir = "tokenizers"
 train_size = 50000
 test_size = 10000
 max_len = 80
 max_length_ratio = 6.0
-oversample = 6
 force_download = false
 
 [tokenizer]

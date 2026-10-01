@@ -4,50 +4,30 @@ A from-scratch implementation of the Transformer (Vaswani et al., 2017) in PyTor
 
 ## Features
 
-- Encoder-decoder Transformer built from scratch (no `nn.Transformer`)
+- Encoder-decoder Transformer built from scratch (no `nn.Transformer`), fused SDPA attention
 - 12 target languages: Hindi, Marathi, Bengali, Gujarati, Kannada, Malayalam, Odia, Punjabi, Tamil, Telugu, Assamese, Sanskrit
-- Five tokenizer types (BPE, Unigram, WordPiece, Whitespace, Regex), selectable independently for source and target
-- Batched greedy decoding and batched beam search with cross-attention caching
-- Mixed-precision training (`torch.amp.autocast`), fused AdamW, pinned-memory non-blocking transfers
-- Fully TOML-configured: no code changes needed to switch language, tokenizer or hyperparameters
+- Five tokenizer types (BPE, Unigram, WordPiece, Whitespace, Regex), selectable independently for source and target; tokenizers are cached and reused at inference
+- Batched greedy decoding and vectorised batched beam search (encoder runs once per batch, length-sorted batching)
+- Mixed-precision training (`torch.amp.autocast`), fused AdamW, dynamic padding, pre-tokenised data
+- TOML-configured: choose languages **by name**; codes and `lang_pair` are derived from `configs/language_config.toml`
 - Built-in evaluation (BLEU, chrF), terminal REPL and Jupyter/Colab widget
 
 ## Supported Languages and Datasets
 
-| Language(s) | Code(s) | Dataset |
-|---|---|---|
-| Hindi | `hi` | [`cfilt/iitb-english-hindi`](https://huggingface.co/datasets/cfilt/iitb-english-hindi) |
-| Marathi, Bengali, Gujarati, Kannada, Malayalam, Odia, Punjabi, Tamil, Telugu, Assamese | `mr`, `bn`, `gu`, `kn`, `ml`, `or`, `pa`, `ta`, `te`, `as` | [`ai4bharat/samanantar`](https://huggingface.co/datasets/ai4bharat/samanantar) |
-| Sanskrit | `sa` | [`acomquest/Saamayik`](https://huggingface.co/datasets/acomquest/Saamayik) |
+| Language(s) | Dataset |
+|---|---|
+| Hindi | [`cfilt/iitb-english-hindi`](https://huggingface.co/datasets/cfilt/iitb-english-hindi) or Samanantar |
+| Marathi, Bengali, Gujarati, Kannada, Malayalam, Odia, Punjabi, Tamil, Telugu, Assamese (and Hindi) | [`ai4bharat/samanantar`](https://huggingface.co/datasets/ai4bharat/samanantar) |
+| Sanskrit | [`acomquest/Saamayik`](https://huggingface.co/datasets/acomquest/Saamayik) |
 
-Datasets are downloaded automatically from Hugging Face on first run.
-
-## Default Configuration
-
-| Category | Setting | Value |
-|---|---|---|
-| Model | Encoder / decoder layers | 6 / 6 |
-| | Attention heads | 8 |
-| | `d_model` | 512 |
-| | `d_ff` | 2048 |
-| | Dropout | 0.1 |
-| Data | Train samples | 50,000 |
-| | Test samples | 10,000 |
-| | Vocabulary size | 22,400 |
-| Training | Epochs | 10 |
-| | Batch size | 224 |
-| | Learning rate | 5e-4 |
-| | Optimizer | AdamW (fused) |
-| Inference | Decoding | Greedy, Beam Search |
-| Evaluation | Metrics | BLEU, chrF |
-
-All values are set in `configs/transformer_config.toml`.
+Datasets are downloaded automatically from Hugging Face on first run. A language/dataset mismatch (e.g. Tamil with Saamayik) raises a clear error.
 
 ## Requirements
 
 - Python 3.9+
-- NVIDIA GPU with CUDA support (T4 or better recommended)
-- PyTorch with CUDA build ([install guide](https://pytorch.org/get-started/locally/))
+- NVIDIA GPU with CUDA for training (T4 or better recommended); inference also runs on CPU
+- PyTorch ≥ 2.3 ([install guide](https://pytorch.org/get-started/locally/))
+- `datasets<4` (Samanantar/Saamayik use loading scripts)
 
 ## Installation
 
@@ -59,131 +39,69 @@ pip install -e .
 
 ## Quick Start
 
-All commands are run from a working directory, where tokenizers, checkpoints and logs are written.
+Run from a working directory; data, tokenizers and checkpoints are written there.
 
 ```bash
 mkdir -p work_dir && cd work_dir
+python -m multilingual_transformer.scripts.train          # data -> tokenizers -> train -> BLEU/chrF
+python -m multilingual_transformer.scripts.interactive    # terminal REPL
 ```
 
-**1. Train** (downloads data, trains tokenizers, trains the model, reports BLEU/chrF, saves the best checkpoint to `checkpoints/`):
-
-```bash
-python -m multilingual_transformer.scripts.train
-```
-
-**2. Translate in the terminal:**
-
-```bash
-python -m multilingual_transformer.scripts.interactive
-```
-
-Enter an English sentence to get both greedy and beam search translations.
-
-**3. Translate in a notebook** (run in a Python cell):
+Notebook:
 
 ```python
 from multilingual_transformer.ui.widget import launch
 launch()
 ```
 
-The widget loads the trained checkpoint and cached tokenizers automatically.
-
-## Google Colab
-
-**0. Enable a GPU runtime (Runtime → Change runtime type), then setup cell:**
-
-```python
-%cd /content
-!rm -rf multilingual_transformer
-!git clone https://github.com/harshad-inarkar/multilingual_transformer.git
-%cd multilingual_transformer
-!pip install -q -e .
-!mkdir -p work_dir
-```
-
-**1. Train** (downloads data, trains tokenizers, trains the model, reports BLEU/chrF, saves the best checkpoint to `checkpoints/`):
-
-```bash
-%cd work_dir
-
-python -m multilingual_transformer.scripts.train
-```
-
-**2. Translate in the terminal:**
-
-```bash
-python -m multilingual_transformer.scripts.interactive
-```
-
-Enter an English sentence to get both greedy and beam search translations.
-
-**3. Translate in a notebook** (run in a Python cell):
-
-```python
-from multilingual_transformer.ui.widget import launch
-launch()
-```
-
+On Colab: enable a GPU runtime, then clone, `pip install -q -e .`, `mkdir work_dir`, `%cd work_dir` and run the same commands.
 
 ## Configuration
 
-Edit `configs/transformer_config.toml`. Example, training English → Hindi:
+Edit `multilingual_transformer/configs/transformer_config.toml`. Only three keys select the language pair:
 
 ```toml
 [language]
-target_language = "Hindi"
+src_lang = "English"
+target_lang = "Tamil"
 dataset_name = "ai4bharat/samanantar"
-tgt_lang = "hi"
-lang_pair = "EN-HI"
-
-[model]
-d_model = 512
-num_layers = 6
-num_heads = 8
-d_ff = 2048
-dropout = 0.1
-
-[training]
-epochs = 10
-batch_size = 224
-lr = 5.0e-4
 ```
 
-To train a different language, change `target_language`, `tgt_lang`, `lang_pair` and, if needed, `dataset_name` (see the dataset table above).
+`tgt_lang` (`ta`) and `lang_pair` (`EN-TA`) are derived from `configs/language_config.toml` (name → code, case-insensitive). To add a language, add one line there.
 
 ## Project Structure
 
 ```
 multilingual_transformer/
 ├── configs/
-│   └── transformer_config.toml    # all runtime settings
-├── multilingual_transformer/
-│   ├── scripts/
-│   │   ├── train.py               # end-to-end training + evaluation
-│   │   └── interactive.py         # terminal translation REPL
-│   └── ui/
-│       └── widget.py              # notebook translation widget
-└── pyproject.toml
+│   ├── config.py                  # dataclasses + TOML loading, artifact paths
+│   ├── transformer_config.toml    # runtime settings
+│   └── language_config.toml       # language name -> code registry
+├── data/        dataset.py, tokenizer.py
+├── models/      attention.py, layers.py, transformer.py
+├── engine/      trainer.py, decoder.py, evaluator.py, loader.py
+├── scripts/     train.py, interactive.py
+├── ui/          widget.py
+└── utils/       helpers.py
 ```
 
-The package is organised into separate modules for data loading, tokenization, model architecture, learning-rate scheduling and inference.
-
+Artifacts (in the working directory): `data/`, `tokenizers/`, `checkpoints/`.
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---|---|
 | `CUDA out of memory` | Lower `batch_size` in the config |
-| Widget or REPL cannot find a checkpoint | Run from the same `work_dir` used for training |
-| Dataset download fails | Check internet access and Hugging Face availability |
+| Widget or REPL cannot find a checkpoint/tokenizer | Run from the same `work_dir` used for training |
+| Old checkpoint fails or translates poorly | Architecture changed (embedding scaling); retrain |
+| Dataset download fails | Check internet access, Hugging Face availability, and `datasets<4` |
 
 ## References
 
 - Vaswani et al., [*Attention Is All You Need*](https://arxiv.org/abs/1706.03762), 2017
-- Ramesh et al., [*Samanantar: The Largest Publicly Available Parallel Corpora Collection for 11 Indic Languages*](https://arxiv.org/abs/2104.05596), 2021
+- Ramesh et al., [*Samanantar*](https://arxiv.org/abs/2104.05596), 2021
 - Kunchukuttan et al., [*The IIT Bombay English-Hindi Parallel Corpus*](https://arxiv.org/abs/1710.02855), 2018
-- Ayush Maheshwari et al., [*Sāmayik: A Benchmark and Dataset for English-Sanskrit Translation*](https://arxiv.org/abs/2305.14004), 2024
-
+- Maheshwari et al., [*Sāmayik*](https://arxiv.org/abs/2305.14004), 2024
 
 ## License
 

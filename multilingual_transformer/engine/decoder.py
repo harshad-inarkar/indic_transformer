@@ -1,14 +1,18 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Iterator
+
 import torch
 import torch.nn.functional as F
-from torch import Tensor
-from multilingual_transformer.data.dataset import numericalize, pad_sequence
+
+from multilingual_transformer.data.dataset import numericalize_batch, pad_batch
 from multilingual_transformer.models.transformer import MultilingualTransformer, make_src_mask, make_tgt_mask
+from multilingual_transformer.utils.helpers import free_memory
 
 
 class TranslationGenerator:
+    """Greedy / beam decoding. The encoder runs once per batch; the decoder only projects the last position."""
+
     def __init__(
         self,
         model: MultilingualTransformer,
@@ -17,7 +21,6 @@ class TranslationGenerator:
         max_len: int,
         device: torch.device,
     ) -> None:
-
         self.src_tok = src_tokenizer
         self.tgt_tok = tgt_tokenizer
         self.max_len = max_len
@@ -26,126 +29,115 @@ class TranslationGenerator:
         self.pad_tgt = tgt_tokenizer.token_to_id("<pad>")
         self.sos_tgt = tgt_tokenizer.token_to_id("<sos>")
         self.eos_tgt = tgt_tokenizer.token_to_id("<eos>")
+        # No DataParallel here: decoding calls model.encoder / model.decoder directly.
+        self.model = model.to(device).eval()
+        self._use_amp = device.type == "cuda"
 
-
-        # Enable Multi-GPU Inference (specifically accelerates batched_beam_decode)
-        if torch.cuda.device_count() > 1 and device.type == "cuda":
-            self.model = nn.DataParallel(model).to(self.device)
-        else:
-            self.model = model.to(self.device)
-
+    # ---- helpers ----
+    def _autocast(self) -> torch.autocast:
+        return torch.autocast(self.device.type, dtype=torch.float16, enabled=self._use_amp)
 
     def _to_text(self, ids: list[int]) -> str:
+        if self.eos_tgt in ids:  # drop anything generated after the first <eos>
+            ids = ids[: ids.index(self.eos_tgt)]
         return self.tgt_tok.decode(ids, skip_special_tokens=True)
 
+    def _batches(self, sentences: list[str], batch_size: int) -> Iterator[tuple[list[int], torch.Tensor, torch.Tensor]]:
+        """Yield (original_indices, src, src_mask), sorted by length to minimise padding."""
+        ids = numericalize_batch(sentences, self.src_tok, self.max_len)
+        order = sorted(range(len(ids)), key=lambda i: len(ids[i]))
+        for s in range(0, len(order), batch_size):
+            idx = order[s : s + batch_size]
+            src = pad_batch([ids[i] for i in idx], self.pad_src).to(self.device)
+            yield idx, src, make_src_mask(src, self.pad_src)
+
+    def _next_logits(self, tgt: torch.Tensor, enc_out: torch.Tensor, src_mask: torch.Tensor) -> torch.Tensor:
+        tgt_mask = make_tgt_mask(tgt, self.pad_tgt)
+        with self._autocast():
+            logits = self.model.decoder(tgt, enc_out, src_mask, tgt_mask, last_only=True)
+        return logits[:, -1, :].float()
+
+    # ---- decoding ----
     @torch.inference_mode()
     def greedy_decode(self, sentence: str) -> str:
-        self.model.eval()
-        src_ids = numericalize(sentence, self.src_tok)
-        src = pad_sequence(src_ids, self.max_len, self.pad_src).unsqueeze(0).to(self.device)
-        src_mask = make_src_mask(src, self.pad_src)
-
-        tgt_ids = [self.sos_tgt]
-        for _ in range(self.max_len - 1):
-            tgt = torch.tensor([tgt_ids], device=self.device)
-            tgt_mask = make_tgt_mask(tgt, self.pad_tgt)
-            with torch.amp.autocast(self.device.type, dtype=torch.float16):
-                logits = self.model(src, tgt, src_mask, tgt_mask)
-            next_token = int(logits[0, -1].argmax().item())
-            tgt_ids.append(next_token)
-            if next_token == self.eos_tgt:
-                break
-        return self._to_text(tgt_ids)
+        return self.batched_greedy_decode([sentence], batch_size=1)[0]
 
     @torch.inference_mode()
     def batched_greedy_decode(self, sentences: list[str], batch_size: int = 128) -> list[str]:
-        self.model.eval()
-        all_decoded: list[str] = []
-        for i in range(0, len(sentences), batch_size):
-            chunk = sentences[i : i + batch_size]
-            b_size = len(chunk)
-            src_ids = [numericalize(t, self.src_tok) for t in chunk]
-            src = torch.stack([pad_sequence(s, self.max_len, self.pad_src) for s in src_ids]).to(self.device)
-            src_mask = make_src_mask(src, self.pad_src)
+        results = [""] * len(sentences)
+        for idx, src, src_mask in self._batches(sentences, batch_size):
+            with self._autocast():
+                enc_out = self.model.encoder(src, src_mask)
 
-            tgt = torch.full((b_size, 1), self.sos_tgt, dtype=torch.long, device=self.device)
-            unfinished = torch.ones(b_size, dtype=torch.bool, device=self.device)
-
+            tgt = torch.full((len(idx), 1), self.sos_tgt, dtype=torch.long, device=self.device)
+            unfinished = torch.ones(len(idx), dtype=torch.bool, device=self.device)
             for _ in range(self.max_len - 1):
-                tgt_mask = make_tgt_mask(tgt, self.pad_tgt)
-                with torch.amp.autocast(self.device.type, dtype=torch.float16):
-                    logits = self.model(src, tgt, src_mask, tgt_mask)
-                next_tokens = logits[:, -1, :].argmax(dim=-1, keepdim=True)
-                tgt = torch.cat([tgt, next_tokens], dim=1)
-                unfinished = unfinished & (next_tokens.squeeze(1) != self.eos_tgt)
+                next_tokens = self._next_logits(tgt, enc_out, src_mask).argmax(dim=-1)
+                tgt = torch.cat([tgt, next_tokens.unsqueeze(1)], dim=1)
+                unfinished &= next_tokens != self.eos_tgt
                 if not unfinished.any():
                     break
 
-            for row in tgt.tolist():
-                all_decoded.append(self._to_text(row))
-        return all_decoded
+            for i, row in zip(idx, tgt.tolist()):
+                results[i] = self._to_text(row)
+            del enc_out, tgt, unfinished, src, src_mask
+        free_memory()
+        return results
 
     @torch.inference_mode()
-    def batched_beam_decode(self, sentences: list[str], beam_size: int = 5, batch_size: int = 128) -> list[str]:
-        self.model.eval()
+    def batched_beam_decode(
+        self,
+        sentences: list[str],
+        beam_size: int = 5,
+        batch_size: int = 128,
+        length_penalty: float = 1.0,
+    ) -> list[str]:
+        """Fully vectorised beam search. Final hypothesis = argmax(score / length**length_penalty)."""
         vocab_size = self.tgt_tok.get_vocab_size()
-        all_decoded: list[str] = []
+        k = beam_size
+        results = [""] * len(sentences)
 
-        for i in range(0, len(sentences), batch_size):
-            chunk = sentences[i : i + batch_size]
-            b = len(chunk)
-            src_ids = [numericalize(t, self.src_tok) for t in chunk]
-            src = torch.stack([pad_sequence(s, self.max_len, self.pad_src) for s in src_ids]).to(self.device)
-            src_mask = make_src_mask(src, self.pad_src)
-
-            with torch.amp.autocast(self.device.type, dtype=torch.float16):
+        for idx, src, src_mask in self._batches(sentences, batch_size):
+            b = len(idx)
+            with self._autocast():
                 enc_out = self.model.encoder(src, src_mask)
+            enc_out = enc_out.repeat_interleave(k, dim=0)
+            src_mask = src_mask.repeat_interleave(k, dim=0)
+            tgt = torch.full((b * k, 1), self.sos_tgt, dtype=torch.long, device=self.device)
 
-            enc_out = enc_out.repeat_interleave(beam_size, dim=0)
-            src_mask = src_mask.repeat_interleave(beam_size, dim=0)
-            tgt = torch.full((b * beam_size, 1), self.sos_tgt, dtype=torch.long, device=self.device)
-
-            scores = torch.full((b, beam_size), float("-inf"), device=self.device)
-            scores[:, 0] = 0.0
-            finished = torch.zeros((b, beam_size), dtype=torch.bool, device=self.device)
+            scores = torch.full((b, k), float("-inf"), device=self.device)
+            scores[:, 0] = 0.0  # only one live beam at step 0
+            finished = torch.zeros((b, k), dtype=torch.bool, device=self.device)
+            row_offset = (torch.arange(b, device=self.device) * k).unsqueeze(1)
 
             for _ in range(self.max_len - 1):
-                tgt_mask = make_tgt_mask(tgt, self.pad_tgt)
-                with torch.amp.autocast(self.device.type, dtype=torch.float16):
-                    logits = self.model.decoder(tgt, enc_out, src_mask, tgt_mask)
+                log_probs = F.log_softmax(self._next_logits(tgt, enc_out, src_mask), dim=-1).view(b, k, vocab_size)
+                # Finished beams may only be extended with <eos> at zero cost.
+                log_probs = log_probs.masked_fill(finished.unsqueeze(-1), float("-inf"))
+                eos_lp = log_probs[..., self.eos_tgt]
+                log_probs[..., self.eos_tgt] = torch.where(finished, torch.zeros_like(eos_lp), eos_lp)
 
-                log_probs = F.log_softmax(logits[:, -1, :], dim=-1).view(b, beam_size, vocab_size)
-                for bi in range(b):
-                    for bm in range(beam_size):
-                        if finished[bi, bm]:
-                            log_probs[bi, bm, :] = float("-inf")
-                            log_probs[bi, bm, self.eos_tgt] = 0.0
+                cand = (scores.unsqueeze(-1) + log_probs).view(b, k * vocab_size)
+                scores, top = cand.topk(k, dim=1)
+                beam_idx = torch.div(top, vocab_size, rounding_mode="floor")
+                token_idx = top % vocab_size
 
-                next_scores = (scores.unsqueeze(-1) + log_probs).view(b, beam_size * vocab_size)
-                top_scores, top_indices = torch.topk(next_scores, beam_size, dim=1)
-                scores = top_scores
-
-                beam_idx = top_indices // vocab_size
-                token_idx = top_indices % vocab_size
-
-                curr_len = tgt.size(1)
-                tgt_reshaped = tgt.view(b, beam_size, curr_len)
-                new_tgt = torch.zeros((b, beam_size, curr_len + 1), dtype=torch.long, device=self.device)
-                new_finished = torch.zeros((b, beam_size), dtype=torch.bool, device=self.device)
-
-                for bi in range(b):
-                    for bm in range(beam_size):
-                        p_beam = beam_idx[bi, bm]
-                        new_tgt[bi, bm, :curr_len] = tgt_reshaped[bi, p_beam]
-                        new_tgt[bi, bm, curr_len] = token_idx[bi, bm]
-                        new_finished[bi, bm] = finished[bi, p_beam] | (token_idx[bi, bm] == self.eos_tgt)
-
-                tgt = new_tgt.view(b * beam_size, curr_len + 1)
-                finished = new_finished
+                parent = (beam_idx + row_offset).view(-1)
+                tgt = torch.cat([tgt[parent], token_idx.view(-1, 1)], dim=1)
+                finished = finished.gather(1, beam_idx) | (token_idx == self.eos_tgt)
                 if finished.all():
                     break
 
-            tgt_results = tgt.view(b, beam_size, -1)
-            for bi in range(b):
-                all_decoded.append(self._to_text(tgt_results[bi, 0].tolist()))
-        return all_decoded
+            seq_len = tgt.size(1)
+            seqs = tgt.view(b, k, seq_len)
+            is_eos = seqs == self.eos_tgt
+            first_eos = is_eos.long().argmax(dim=-1)
+            lengths = torch.where(is_eos.any(-1), first_eos, torch.full_like(first_eos, seq_len - 1)).clamp(min=1)
+            best = (scores / lengths.float().pow(length_penalty)).argmax(dim=1)
+            best_seqs = seqs[torch.arange(b, device=self.device), best].tolist()
+
+            for i, row in zip(idx, best_seqs):
+                results[i] = self._to_text(row)
+            del enc_out, tgt, seqs, scores, finished, src, src_mask
+        free_memory()
+        return results

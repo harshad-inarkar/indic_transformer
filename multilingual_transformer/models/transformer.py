@@ -1,20 +1,22 @@
 from __future__ import annotations
 
-from typing import cast
 import torch
 from torch import Tensor, nn
-from multilingual_transformer.models.layers import DecoderLayer, EncoderLayer, PositionalEncoding
+
+from multilingual_transformer.models.layers import DecoderLayer, EncoderLayer, TokenEmbedding
 
 
 def make_src_mask(src: Tensor, pad_idx: int) -> Tensor:
+    """(B, 1, 1, S) bool; True = real token."""
     return (src != pad_idx).unsqueeze(1).unsqueeze(2)
 
 
 def make_tgt_mask(tgt: Tensor, pad_idx: int) -> Tensor:
+    """(B, 1, T, T) bool; padding mask & causal mask."""
     seq_len = tgt.size(1)
     pad_mask = (tgt != pad_idx).unsqueeze(1).unsqueeze(2)
-    causal_mask = torch.tril(torch.ones(seq_len, seq_len, device=tgt.device)).bool()
-    return pad_mask & causal_mask
+    causal = torch.ones(seq_len, seq_len, dtype=torch.bool, device=tgt.device).tril()
+    return pad_mask & causal
 
 
 class TransformerEncoder(nn.Module):
@@ -22,14 +24,13 @@ class TransformerEncoder(nn.Module):
         self, vocab_size: int, max_len: int, d_model: int, num_layers: int, num_heads: int, d_ff: int, dropout: float
     ) -> None:
         super().__init__()
-        self.emb = nn.Embedding(vocab_size, d_model)
-        self.pos = PositionalEncoding(d_model, max_len)
+        self.embed = TokenEmbedding(vocab_size, d_model, max_len, dropout)
         self.layers = nn.ModuleList(
             [EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)]
         )
 
     def forward(self, x: Tensor, mask: Tensor | None = None) -> Tensor:
-        x = self.pos(self.emb(x))
+        x = self.embed(x)
         for layer in self.layers:
             x = layer(x, mask)
         return x
@@ -40,20 +41,27 @@ class TransformerDecoder(nn.Module):
         self, vocab_size: int, max_len: int, d_model: int, num_layers: int, num_heads: int, d_ff: int, dropout: float
     ) -> None:
         super().__init__()
-        self.emb = nn.Embedding(vocab_size, d_model)
-        self.pos = PositionalEncoding(d_model, max_len)
+        self.embed = TokenEmbedding(vocab_size, d_model, max_len, dropout)
         self.layers = nn.ModuleList(
             [DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)]
         )
         self.fc_out = nn.Linear(d_model, vocab_size)
 
     def forward(
-        self, x: Tensor, enc_out: Tensor, src_mask: Tensor | None = None, tgt_mask: Tensor | None = None
+        self,
+        x: Tensor,
+        enc_out: Tensor,
+        src_mask: Tensor | None = None,
+        tgt_mask: Tensor | None = None,
+        last_only: bool = False,
     ) -> Tensor:
-        x = self.pos(self.emb(x))
+        """`last_only` projects only the final position to the vocab (decoding speed-up)."""
+        x = self.embed(x)
         for layer in self.layers:
             x = layer(x, enc_out, src_mask, tgt_mask)
-        return cast(Tensor, self.fc_out(x))
+        if last_only:
+            x = x[:, -1:, :]
+        return self.fc_out(x)
 
 
 class MultilingualTransformer(nn.Module):
@@ -69,12 +77,20 @@ class MultilingualTransformer(nn.Module):
         dropout: float = 0.1,
     ) -> None:
         super().__init__()
-        assert torch.cuda.is_available(), "CUDA is required for this pipeline"
         self.encoder = TransformerEncoder(src_vocab_size, max_len, d_model, num_layers, num_heads, d_ff, dropout)
         self.decoder = TransformerDecoder(tgt_vocab_size, max_len, d_model, num_layers, num_heads, d_ff, dropout)
+        self._init_weights(d_model)
+
+    def _init_weights(self, d_model: int) -> None:
+        for p in self.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
+        # Embeddings are multiplied by sqrt(d_model), so init with std = d_model**-0.5.
+        for emb in (self.encoder.embed.emb, self.decoder.embed.emb):
+            nn.init.normal_(emb.weight, mean=0.0, std=d_model**-0.5)
 
     def forward(
         self, src: Tensor, tgt: Tensor, src_mask: Tensor | None = None, tgt_mask: Tensor | None = None
     ) -> Tensor:
         enc_out = self.encoder(src, src_mask)
-        return cast(Tensor, self.decoder(tgt, enc_out, src_mask, tgt_mask))
+        return self.decoder(tgt, enc_out, src_mask, tgt_mask)

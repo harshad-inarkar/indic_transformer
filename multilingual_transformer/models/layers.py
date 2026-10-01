@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import math
-from typing import cast
+
 import torch
-from torch import Tensor, nn
 import torch.nn.functional as F
+from torch import Tensor, nn
+
 from multilingual_transformer.models.attention import MultiHeadAttention
 
 
@@ -16,10 +17,25 @@ class PositionalEncoding(nn.Module):
         div = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10_000.0) / d_model))
         pe[:, 0::2] = torch.sin(position * div)
         pe[:, 1::2] = torch.cos(position * div)
-        self.register_buffer("pe", pe.unsqueeze(0))
+        # Non-persistent: recomputed, so checkpoints don't depend on max_len.
+        self.register_buffer("pe", pe.unsqueeze(0), persistent=False)
 
     def forward(self, x: Tensor) -> Tensor:
-        return x + cast(Tensor, self.pe)[:, : x.size(1), :]
+        return x + self.pe[:, : x.size(1), :]
+
+
+class TokenEmbedding(nn.Module):
+    """Embedding * sqrt(d_model) + positional encoding + dropout (as in the paper)."""
+
+    def __init__(self, vocab_size: int, d_model: int, max_len: int, dropout: float) -> None:
+        super().__init__()
+        self.emb = nn.Embedding(vocab_size, d_model)
+        self.pos = PositionalEncoding(d_model, max_len)
+        self.drop = nn.Dropout(dropout)
+        self.scale = math.sqrt(d_model)
+
+    def forward(self, x: Tensor) -> Tensor:
+        return self.drop(self.pos(self.emb(x) * self.scale))
 
 
 class FeedForward(nn.Module):
@@ -29,7 +45,7 @@ class FeedForward(nn.Module):
         self.fc2 = nn.Linear(d_ff, d_model)
 
     def forward(self, x: Tensor) -> Tensor:
-        return cast(Tensor, self.fc2(F.relu(self.fc1(x))))
+        return self.fc2(F.relu(self.fc1(x)))
 
 
 class EncoderLayer(nn.Module):
@@ -43,7 +59,7 @@ class EncoderLayer(nn.Module):
 
     def forward(self, x: Tensor, mask: Tensor | None = None) -> Tensor:
         x = self.norm1(x + self.drop(self.self_attn(x, x, x, mask)))
-        return cast(Tensor, self.norm2(x + self.drop(self.ffn(x))))
+        return self.norm2(x + self.drop(self.ffn(x)))
 
 
 class DecoderLayer(nn.Module):
@@ -66,4 +82,4 @@ class DecoderLayer(nn.Module):
     ) -> Tensor:
         x = self.norm1(x + self.drop(self.self_attn(x, x, x, tgt_mask)))
         x = self.norm2(x + self.drop(self.cross_attn(x, enc_out, enc_out, src_mask)))
-        return cast(Tensor, self.norm3(x + self.drop(self.ffn(x))))
+        return self.norm3(x + self.drop(self.ffn(x)))

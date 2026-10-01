@@ -1,18 +1,16 @@
 from __future__ import annotations
 
-import gc
 import time
-from pathlib import Path
 from typing import Any
+
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
-from multilingual_transformer.configs.config  import AppConfig
+from multilingual_transformer.configs.config import AppConfig
 from multilingual_transformer.models.transformer import MultilingualTransformer, make_src_mask, make_tgt_mask
-from multilingual_transformer.utils.helpers import set_seed, free_memory
-
+from multilingual_transformer.utils.helpers import free_memory
 
 
 class Trainer:
@@ -27,33 +25,37 @@ class Trainer:
     ) -> None:
         assert torch.cuda.is_available(), "Execution restricted to GPU (CUDA)."
         self.device = torch.device("cuda")
-
-
-
-        # Enable Multi-GPU Training
-        if torch.cuda.device_count() > 1:
-            print(f"🚀 Utilizing {torch.cuda.device_count()} GPUs for training!")
-            self.model = nn.DataParallel(model).to(self.device)
-        else:
-            self.model = model.to(self.device)
-        
-
-
         self.config = config
         self.train_loader = train_loader
         self.val_loader = val_loader
-        self.src_tok = src_tok
-        self.tgt_tok = tgt_tok
+
+        # raw_model is always the plain module (used for saving/loading weights).
+        self.raw_model = model.to(self.device)
+        self.model: nn.Module = self.raw_model
+        if config.training.torch_compile:
+            self.model = torch.compile(self.model, dynamic=True)
+        # Enable Multi-GPU Training
+        if torch.cuda.device_count() > 1:
+            print(f"🚀 Utilizing {torch.cuda.device_count()} GPUs for training!")
+            self.model = nn.DataParallel(self.model)
 
         self.pad_src = src_tok.token_to_id("<pad>")
         self.pad_tgt = tgt_tok.token_to_id("<pad>")
         self.criterion = nn.CrossEntropyLoss(
             ignore_index=self.pad_tgt, label_smoothing=config.training.label_smoothing
         )
+        # Validation loss is plain NLL (no smoothing) so it is comparable across settings.
+        self.eval_criterion = nn.CrossEntropyLoss(ignore_index=self.pad_tgt)
+
+        # No weight decay on biases / LayerNorm (1-D params).
+        decay = [p for p in self.raw_model.parameters() if p.dim() > 1]
+        no_decay = [p for p in self.raw_model.parameters() if p.dim() <= 1]
         self.optimizer = torch.optim.AdamW(
-            self.model.parameters(),
+            [
+                {"params": decay, "weight_decay": config.training.weight_decay},
+                {"params": no_decay, "weight_decay": 0.0},
+            ],
             lr=config.training.lr,
-            weight_decay=config.training.weight_decay,
             fused=True,
         )
         total_steps = len(train_loader) * config.training.epochs
@@ -62,58 +64,51 @@ class Trainer:
         )
         self.scaler = torch.amp.GradScaler(self.device.type)
 
+    def _loss(self, src: torch.Tensor, tgt: torch.Tensor, criterion: nn.Module) -> torch.Tensor:
+        src = src.to(self.device, non_blocking=True)
+        tgt = tgt.to(self.device, non_blocking=True)
+        tgt_in, tgt_out = tgt[:, :-1], tgt[:, 1:]
+        src_mask = make_src_mask(src, self.pad_src)
+        tgt_mask = make_tgt_mask(tgt_in, self.pad_tgt)
+        with torch.amp.autocast(self.device.type, dtype=torch.float16):
+            logits = self.model(src, tgt_in, src_mask, tgt_mask)
+            return criterion(logits.reshape(-1, logits.size(-1)), tgt_out.reshape(-1))
+
     def train_epoch(self, epoch_idx: int) -> float:
         self.model.train()
-        total_loss = 0.0
+        total_loss = torch.zeros((), device=self.device)  # accumulate on GPU: no per-step host sync
         pbar = tqdm(self.train_loader, desc=f"Epoch {epoch_idx}/{self.config.training.epochs}", leave=False)
 
-        for src, tgt in pbar:
-            src = src.to(self.device, non_blocking=True)
-            tgt = tgt.to(self.device, non_blocking=True)
-            tgt_in, tgt_out = tgt[:, :-1], tgt[:, 1:]
-
-            src_mask = make_src_mask(src, self.pad_src)
-            tgt_mask = make_tgt_mask(tgt_in, self.pad_tgt)
-
-            with torch.amp.autocast(self.device.type, dtype=torch.float16):
-                logits = self.model(src, tgt_in, src_mask, tgt_mask)
-                loss = self.criterion(logits.reshape(-1, logits.size(-1)), tgt_out.reshape(-1))
+        for step, (src, tgt) in enumerate(pbar, 1):
+            loss = self._loss(src, tgt, self.criterion)
 
             self.optimizer.zero_grad(set_to_none=True)
             self.scaler.scale(loss).backward()
             self.scaler.unscale_(self.optimizer)
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_(self.raw_model.parameters(), max_norm=1.0)
             self.scaler.step(self.optimizer)
             self.scaler.update()
             self.scheduler.step()
 
-            l_val = float(loss.item())
-            total_loss += l_val
-            pbar.set_postfix({"loss": f"{l_val:.4f}", "lr": f"{self.scheduler.get_last_lr()[0]:.2e}"})
+            total_loss += loss.detach()
+            if step % 25 == 0:
+                pbar.set_postfix({"loss": f"{loss.item():.4f}", "lr": f"{self.scheduler.get_last_lr()[0]:.2e}"})
 
-        return total_loss / len(self.train_loader)
+        return total_loss.item() / len(self.train_loader)
 
     @torch.no_grad()
     def evaluate_loss(self) -> float:
         self.model.eval()
-        total = 0.0
+        total = torch.zeros((), device=self.device)
         for src, tgt in self.val_loader:
-            src = src.to(self.device, non_blocking=True)
-            tgt = tgt.to(self.device, non_blocking=True)
-            tgt_in, tgt_out = tgt[:, :-1], tgt[:, 1:]
-            src_mask = make_src_mask(src, self.pad_src)
-            tgt_mask = make_tgt_mask(tgt_in, self.pad_tgt)
-            with torch.amp.autocast(self.device.type, dtype=torch.float16):
-                logits = self.model(src, tgt_in, src_mask, tgt_mask)
-                loss = self.criterion(logits.reshape(-1, logits.size(-1)), tgt_out.reshape(-1))
-            total += float(loss.item())
-        return total / max(len(self.val_loader), 1)
+            total += self._loss(src, tgt, self.eval_criterion).detach()
+        return total.item() / max(len(self.val_loader), 1)
 
     def fit(self) -> tuple[float, float, float]:
         torch.cuda.reset_peak_memory_stats()
         best_loss = float("inf")
-        tag = self.config.language.lang_pair.lower().replace("-", "_")
-        best_path = self.config.data.checkpoint_dir / f"transformer_{tag}_best.pt"
+        best_path = self.config.checkpoint_path()
+        best_path.parent.mkdir(parents=True, exist_ok=True)
 
         start_time = time.time()
         for epoch in range(1, self.config.training.epochs + 1):
@@ -126,20 +121,27 @@ class Trainer:
 
             if va_loss < best_loss:
                 best_loss = va_loss
-                self.config.data.checkpoint_dir.mkdir(parents=True, exist_ok=True)
-                
-                # Unwrap the model from DataParallel before saving the state_dict
-                # This ensures the checkpoint can be loaded later on a single GPU
-                model_to_save = self.model.module if isinstance(self.model, nn.DataParallel) else self.model
-                
+                # Always save the unwrapped module (loadable on a single GPU, no compile/DP prefixes).
                 torch.save(
-                    {"state_dict": model_to_save.state_dict(), "loss": best_loss, "epoch": epoch},
+                    {"state_dict": self.raw_model.state_dict(), "loss": best_loss, "epoch": epoch},
                     best_path,
                 )
-
             free_memory()
 
         total_time = time.time() - start_time
         peak_mem = torch.cuda.max_memory_allocated() / 1e9
         peak_res = torch.cuda.max_memory_reserved() / 1e9
         return total_time, peak_mem, peak_res
+
+    def load_best(self) -> None:
+        """Restore the best-validation checkpoint (the in-memory weights are from the last epoch)."""
+        path = self.config.checkpoint_path()
+        if path.exists():
+            ckpt = torch.load(path, map_location="cpu", weights_only=True)
+            self.raw_model.load_state_dict(ckpt["state_dict"])
+            del ckpt
+
+    def release(self) -> None:
+        """Drop optimizer / scheduler / loaders so decoding has the GPU memory to itself."""
+        del self.optimizer, self.scheduler, self.scaler, self.train_loader, self.val_loader, self.model
+        free_memory()

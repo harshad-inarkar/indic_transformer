@@ -1,0 +1,19 @@
+# Predefined language registry: language name -> ISO 639-1 code.
+# transformer_config.toml only needs src_lang / target_lang names;
+# codes (tgt_lang) and lang_pair (e.g. "EN-HI") are derived from this table.
+# Lookup is case-insensitive.
+
+[languages]
+English   = "en"
+Hindi     = "hi"
+Marathi   = "mr"
+Bengali   = "bn"
+Gujarati  = "gu"
+Kannada   = "kn"
+Malayalam = "ml"
+Odia      = "or"
+Punjabi   = "pa"
+Tamil     = "ta"
+Telugu    = "te"
+Assamese  = "as"
+Sanskrit  = "sa"
