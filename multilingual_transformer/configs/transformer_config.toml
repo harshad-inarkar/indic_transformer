@@ -75,12 +75,12 @@ save_best = true     # false: save latest checkpoint; true: save best-validation
 
 [inference]
 sample_source = "test"   # "config" = sentences below, "test" = first num_samples test pairs
-num_samples = 5            # used when sample_source = "test"
+num_samples = 10            # used when sample_source = "test"
 sample_sentences = [
-    "this is a wonderful day",
+    "farmer is important for the country",
     "education is essential for every child",
-    "the water is very clean and cold",
-    "how are you doing today ?",
-    "farmers work hard in the field"
+    "they are going to school",
+    "She is smart girl",
+    "he is a great teacher"
 ]
 
