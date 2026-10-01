@@ -53,14 +53,14 @@ force_download = false
 
 algo_src = "wordpiece"
 algo_tgt = "unigram"
-max_vocab_size = 12000
+max_vocab_size = 16000
 
 [model]
 d_model = 512
 num_layers = 4
 num_heads = 4
 d_ff = 1024
-dropout = 0.2
+dropout = 0.1
 
 [training]
 epochs = 10
