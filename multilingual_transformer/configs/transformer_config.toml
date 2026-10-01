@@ -16,8 +16,6 @@ target_lang = "Hindi"
 # 11 Indic Lang  | ai4bharat/samanantar
 # Sanskrit       | acomquest/Saamayik
 
-
-Sanskrit    
 dataset_name = "ai4bharat/samanantar"
 
 [data]
