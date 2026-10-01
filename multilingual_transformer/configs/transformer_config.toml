@@ -43,7 +43,7 @@ tokenizer_dir = "processed_tokenizers"
 train_size = 50000
 val_size = 5000    # per-epoch validation loss
 test_size = 5000   # final BLEU/chrF and test samples
-max_len = 80
+max_len = 96
 max_length_ratio = 5.0
 force_download = false
 
@@ -52,8 +52,8 @@ force_download = false
 #bpe, unigram, wordpiece, whitespace, regex
 
 algo_src = "wordpiece"
-algo_tgt = "bpe"
-max_vocab_size = 8000
+algo_tgt = "unigram"
+max_vocab_size = 12000
 
 [model]
 d_model = 512
