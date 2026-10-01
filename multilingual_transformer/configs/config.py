@@ -10,7 +10,6 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib
 
-DEFAULT_LANGUAGE_CONFIG = Path(__file__).resolve().parent / "language_config.toml"
 T = TypeVar("T")
 
 
@@ -35,7 +34,7 @@ class LanguageConfig:
     src_lang: str = "English"
     target_lang: str = "Hindi"
     dataset_name: str = "ai4bharat/samanantar"
-    # Derived from language_config.toml (not read from the main toml)
+    # Derived from the [language_map] table (not set directly)
     src_code: str = field(init=False, default="en")
     tgt_lang: str = field(init=False, default="hi")  # target language *code*
     lang_pair: str = field(init=False, default="EN-HI")
@@ -44,7 +43,7 @@ class LanguageConfig:
         lookup = {k.lower(): v for k, v in codes.items()}
         for name in (self.src_lang, self.target_lang):
             if name.lower() not in lookup:
-                raise ValueError(f"Unknown language '{name}'. Supported: {', '.join(codes)}")
+                raise ValueError(f"Unknown language '{name}'. Add it to [language_map]. Known: {', '.join(codes)}")
         self.src_code = lookup[self.src_lang.lower()]
         self.tgt_lang = lookup[self.target_lang.lower()]
         self.lang_pair = f"{self.src_code}-{self.tgt_lang}".upper()
@@ -127,19 +126,18 @@ class AppConfig:
     inference: InferenceConfig
 
     @classmethod
-    def from_toml(cls, path: str | Path, language_config: str | Path | None = None) -> AppConfig:
+    def from_toml(cls, path: str | Path) -> AppConfig:
         path = Path(path)
         with path.open("rb") as f:
             raw = tomllib.load(f)
 
-        if language_config is not None:
-            lang_path = Path(language_config)
-        elif (path.parent / "language_config.toml").exists():
-            lang_path = path.parent / "language_config.toml"
-        else:
-            lang_path = DEFAULT_LANGUAGE_CONFIG
-        with lang_path.open("rb") as f:
-            codes = tomllib.load(f).get("languages", {})
+        # Language name -> code registry lives in the same file, under [language_map].
+        codes = raw.get("language_map", {})
+        if not codes:
+            raise ValueError(
+                f"No [language_map] table found in {path}. "
+                'Add one entry per language, e.g.  Hindi = "hi".'
+            )
 
         language = _build(LanguageConfig, raw.get("language", {}))
         language.resolve(codes)

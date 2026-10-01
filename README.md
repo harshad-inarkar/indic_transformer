@@ -11,7 +11,7 @@ A from-scratch implementation of the Transformer (Vaswani et al., 2017) in PyTor
 - Batched greedy decoding and vectorised batched beam search (encoder runs once per batch, length-sorted batching)
 - Mixed-precision training (`torch.amp.autocast`), fused AdamW, dynamic padding, pre-tokenised data
 - Choose between keeping the **latest** or the **best-validation** checkpoint (`save_best`)
-- TOML-configured: choose languages **by name**; codes and `lang_pair` are derived from `configs/language_config.toml`
+- TOML-configured: choose languages **by name**; codes and `lang_pair` are derived from the `[language_map]` table in `transformer_config.toml`
 - Built-in evaluation (BLEU, chrF), terminal REPL and Jupyter/Colab widget
 
 ## Supported Languages and Datasets
@@ -118,7 +118,7 @@ target_lang = "Hindi"
 dataset_name = "ai4bharat/samanantar"
 ```
 
-`tgt_lang` (`ta`) and `lang_pair` (`EN-TA`) are derived from `configs/language_config.toml` (name → code, case-insensitive). To add a language, add one line there.
+`tgt_lang` (`hi`) and `lang_pair` (`EN-HI`) are derived from the `[language_map]` table in the same file (name → code, case-insensitive). To add a language, add one line there.
 
 ### Data splits
 
@@ -169,7 +169,7 @@ multilingual_transformer/
 ├── configs/
 │   ├── config.py                  # dataclasses + TOML loading, artifact paths
 │   ├── transformer_config.toml    # runtime settings
-│   └── language_config.toml       # language name -> code registry
+│  
 ├── data/        dataset.py, tokenizer.py
 ├── models/      attention.py, layers.py, transformer.py
 ├── engine/      trainer.py, decoder.py, evaluator.py, loader.py

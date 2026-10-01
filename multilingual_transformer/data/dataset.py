@@ -112,9 +112,8 @@ class DataPipeline:
         if self.dataset_name not in ("cfilt/iitb-english-hindi", "acomquest/Saamayik"):
             args = (self.dataset_name, self.tgt_lang)
         try:
-            ds = load_dataset(*args, split="train", streaming=True, trust_remote_code=True)
+            ds = load_dataset(*args, split="train", streaming=True)
         except (TypeError, ValueError, RuntimeError):
-            # Newer `datasets` releases no longer accept trust_remote_code; retry without it.
             ds = load_dataset(*args, split="train", streaming=True)
         return ds.shuffle(seed=self.seed, buffer_size=10_000)
 

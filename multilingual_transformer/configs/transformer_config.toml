@@ -2,6 +2,24 @@
 name = "multilingual_transformer"
 seed = 42
 
+
+
+[language_map]
+English   = "en"
+Hindi     = "hi"
+Marathi   = "mr"
+Bengali   = "bn"
+Gujarati  = "gu"
+Kannada   = "kn"
+Malayalam = "ml"
+Odia      = "or"
+Punjabi   = "pa"
+Tamil     = "ta"
+Telugu    = "te"
+Assamese  = "as"
+Sanskrit  = "sa"
+
+
 # Only these three keys are needed. Language codes (tgt_lang) and lang_pair
 # (e.g. "EN-HI") are derived from configs/language_config.toml.
 [language]
@@ -65,3 +83,4 @@ sample_sentences = [
     "how are you doing today ?",
     "farmers work hard in the field"
 ]
+
