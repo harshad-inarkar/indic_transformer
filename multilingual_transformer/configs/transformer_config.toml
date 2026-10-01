@@ -43,7 +43,7 @@ tokenizer_dir = "processed_tokenizers"
 train_size = 50000
 val_size = 5000    # per-epoch validation loss
 test_size = 5000   # final BLEU/chrF and test samples
-max_len = 128
+max_len = 80
 max_length_ratio = 5.0
 force_download = false
 
