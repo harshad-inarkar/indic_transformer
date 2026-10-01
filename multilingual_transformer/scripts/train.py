@@ -150,8 +150,11 @@ def main() -> None:
     )
 
     if cfg.inference.sample_source == "test":
-        sentences = te_src[: cfg.inference.num_samples]
-        refs: list[str] | None = te_tgt[: cfg.inference.num_samples]
+        k = min(cfg.inference.num_samples, len(te_src))
+        # Seeded local RNG: same samples every run, without touching global random state
+        idx = random.Random(cfg.project.seed).sample(range(len(te_src)), k)
+        sentences = [te_src[i] for i in idx]
+        refs: list[str] | None = [te_tgt[i] for i in idx]
         title = "Test"
     else:
         sentences = cfg.inference.sample_sentences

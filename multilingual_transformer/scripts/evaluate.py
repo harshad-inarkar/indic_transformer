@@ -103,11 +103,19 @@ def main() -> None:
     print("=" * 70 + "\n")
 
     if args.show_samples:
+        k = min(10, len(te_src))
+        idx = random.Random(cfg.project.seed).sample(range(len(te_src)), k)
+        sents = [te_src[i] for i in idx]
+        if args.method == "greedy":
+            preds = generator.batched_greedy_decode(sents, batch_size=gen_bs)
+        else:
+            preds = generator.batched_beam_decode(sents, beam_size=args.beam_size, batch_size=gen_bs)
+
         print(f"=== Test Sample Translations ({cfg.language.lang_pair}) ===")
-        for i, s in enumerate(samples, 1):
-            print(f"[{i}] EN   : {s['src']}")
-            print(f"    Ref    : {s['ref']}")
-            print(f"    Pred   : {s['pred']}\n")
+        for n, (i, pred) in enumerate(zip(idx, preds), 1):
+            print(f"[{n}] EN   : {te_src[i]}")
+            print(f"    Ref    : {te_tgt[i]}")
+            print(f"    Pred   : {pred}\n")
 
 
 if __name__ == "__main__":
