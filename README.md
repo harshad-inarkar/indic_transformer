@@ -24,10 +24,9 @@ Datasets are downloaded automatically from Hugging Face on first run. A language
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.11+
 - NVIDIA GPU with CUDA for training (T4 or better recommended); inference also runs on CPU
 - PyTorch ≥ 2.3 ([install guide](https://pytorch.org/get-started/locally/))
-- `datasets<4` (Samanantar/Saamayik use loading scripts)
 
 ## Installation
 
@@ -54,7 +53,15 @@ from multilingual_transformer.ui.widget import launch
 launch()
 ```
 
-On Colab: enable a GPU runtime, then clone, `pip install -q -e .`, `mkdir work_dir`, `%cd work_dir` and run the same commands.
+## Google Colab Setup
+
+On Colab: enable a GPU runtime (e.g. T4), then run the same commands.
+
+Alternatively, use the Colab notebook directly—it clones the repo and runs the required train/translate scripts. 
+Language and training parameters can be configured in transformer_config.toml.
+
+https://colab.research.google.com/drive/1umfH2Zis4b6Hzya5qL5g0eMsComwdU-f
+
 
 ## Configuration
 
