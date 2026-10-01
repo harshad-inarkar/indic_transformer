@@ -43,7 +43,7 @@ tokenizer_dir = "processed_tokenizers"
 train_size = 50000
 val_size = 5000    # per-epoch validation loss
 test_size = 5000   # final BLEU/chrF and test samples
-max_len = 96
+max_len = 80
 max_length_ratio = 5.0
 force_download = false
 
@@ -56,14 +56,14 @@ algo_tgt = "unigram"
 max_vocab_size = 12800
 
 [model]
-d_model = 512
+d_model = 256
 num_layers = 4
 num_heads = 4
 d_ff = 1024
-dropout = 0.2
+dropout = 0.1
 
 [training]
-epochs = 7
+epochs = 10
 batch_size = 256
 lr = 5.0e-4
 weight_decay = 0.01
