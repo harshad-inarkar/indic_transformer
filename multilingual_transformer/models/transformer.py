@@ -46,9 +46,9 @@ class TransformerDecoder(nn.Module):
             [DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)]
         )
         self.fc_out = nn.Linear(d_model, vocab_size, bias=False)
-        
-        # Tie target input embedding and output projection weights
-        self.fc_out.weight = self.embed.emb.weight
+
+        # # Tie target input embedding and output projection weights
+        # self.fc_out.weight = self.embed.emb.weight
 
     def forward(
         self,
