@@ -5,14 +5,21 @@ seed = 42
 # Only these three keys are needed. Language codes (tgt_lang) and lang_pair
 # (e.g. "EN-HI") are derived from configs/language_config.toml.
 [language]
+
+# Hindi, Marathi, Bengali, Gujarati, Kannada, Malayalam, Odia, Punjabi, Tamil, 
+#Telugu, Assamese, Sanskrit and English. 
+
 src_lang = "English"
 target_lang = "Hindi"
+
+#cfilt/iitb-english-hindi | ai4bharat/samanantar | acomquest/Saamayik
+
 dataset_name = "ai4bharat/samanantar"
 
 [data]
-data_dir = "data"
-checkpoint_dir = "checkpoints"
-tokenizer_dir = "tokenizers"
+data_dir = "processed_data"
+checkpoint_dir = "training_checkpoints"
+tokenizer_dir = "processed_tokenizers"
 train_size = 50000
 test_size = 10000
 max_len = 80
