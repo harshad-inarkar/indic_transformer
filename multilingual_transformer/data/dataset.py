@@ -108,11 +108,14 @@ class DataPipeline:
         return {name: self.data_dir / f"{name}_{tag}_{n}.jsonl" for name, n in sizes.items()}
 
     def _open_stream(self) -> Any:
-        kwargs: dict[str, Any] = dict(split="train", streaming=True)
-        if self.dataset_name in ("cfilt/iitb-english-hindi", "acomquest/Saamayik"):
-            ds = load_dataset(self.dataset_name, **kwargs)
-        else:
-            ds = load_dataset(self.dataset_name, self.tgt_lang, **kwargs)
+        args: tuple[str, ...] = (self.dataset_name,)
+        if self.dataset_name not in ("cfilt/iitb-english-hindi", "acomquest/Saamayik"):
+            args = (self.dataset_name, self.tgt_lang)
+        try:
+            ds = load_dataset(*args, split="train", streaming=True, trust_remote_code=True)
+        except (TypeError, ValueError, RuntimeError):
+            # Newer `datasets` releases no longer accept trust_remote_code; retry without it.
+            ds = load_dataset(*args, split="train", streaming=True)
         return ds.shuffle(seed=self.seed, buffer_size=10_000)
 
     def _extract_pair(self, row: dict[str, Any]) -> tuple[str, str]:
@@ -170,6 +173,13 @@ class DataPipeline:
             out.extend([s_part, t_part])
         del src, tgt
         return tuple(out)  # type: ignore[return-value]
+
+    def load_cached_split(self, name: str, size: int) -> tuple[list[str], list[str]]:
+        """Load one cached split ("train" / "val" / "test") written by acquire_corpus; never downloads."""
+        path = self._cache_paths({name: size})[name]
+        if not path.exists():
+            raise FileNotFoundError(f"Cached {name} split not found at {path}. Run training first.")
+        return self._load_jsonl(path)
 
     @staticmethod
     def _save_jsonl(path: Path, src: list[str], tgt: list[str]) -> None:

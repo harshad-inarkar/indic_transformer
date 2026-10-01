@@ -26,7 +26,7 @@ train_size = 50000
 val_size = 5000    # per-epoch validation loss
 test_size = 5000   # final BLEU/chrF and test samples
 max_len = 80
-max_length_ratio = 6.0
+max_length_ratio = 5.0
 force_download = false
 
 [tokenizer]
@@ -35,14 +35,14 @@ force_download = false
 
 algo_src = "wordpiece"
 algo_tgt = "unigram"
-max_vocab_size = 22400
+max_vocab_size = 16000
 
 [model]
-d_model = 512
-num_layers = 6
-num_heads = 8
-d_ff = 2048
-dropout = 0.1
+d_model = 256
+num_layers = 4
+num_heads = 4
+d_ff = 1024
+dropout = 0.2
 
 [training]
 epochs = 10
@@ -52,8 +52,8 @@ weight_decay = 0.01
 label_smoothing = 0.1
 torch_compile = false
 gen_batch_size = 128
-bleu_sample = 300     # number of test sentences used for BLEU/chrF
-save_best = false     # false: save latest checkpoint; true: save best-validation checkpoint
+bleu_sample = 3000     # number of test sentences used for BLEU/chrF
+save_best = true     # false: save latest checkpoint; true: save best-validation checkpoint
 
 [inference]
 sample_source = "test"   # "config" = sentences below, "test" = first num_samples test pairs
