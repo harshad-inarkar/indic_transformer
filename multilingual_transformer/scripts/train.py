@@ -39,6 +39,8 @@ def print_stats_table(
     print("-" * 70)
     print(f"Epochs            : {config.training.epochs}")
     print(f"Train/Val/Test    : {config.data.train_size:,} / {config.data.val_size:,} / {config.data.test_size:,}")
+    print(f"BlEU Samples      : {config.training.bleu_sample}")
+
     print(f"Batch Size        : {config.training.batch_size} (Train) | {config.training.gen_batch_size} (Eval)")
     print(f"Steps per Epoch   : {train_loader_len:,}")
     print(f"Total Train Time  : {total_time / 60:.2f} minutes")
@@ -72,8 +74,6 @@ def main() -> None:
     print(f"Train Size   : {cfg.data.train_size}")
     print(f"Val Size     : {cfg.data.val_size}")
     print(f"Test Size    : {cfg.data.test_size}")
-    print(f"BlEU Samples : {cfg.training.bleu_sample}")
-
     print(f"Save Best    : {cfg.training.save_best} ({'best-val' if cfg.training.save_best else 'latest'} checkpoint)")
     print(f"Samples From : {cfg.inference.sample_source}")
     print("=" * 50 + "\n")
