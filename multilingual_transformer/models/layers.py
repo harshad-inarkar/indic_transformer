@@ -25,17 +25,15 @@ class PositionalEncoding(nn.Module):
 
 
 class TokenEmbedding(nn.Module):
-    """Embedding * sqrt(d_model) + positional encoding + dropout (as in the paper)."""
+    """Embedding + positional encoding (same dynamics as the original model: no scaling, no extra dropout)."""
 
-    def __init__(self, vocab_size: int, d_model: int, max_len: int, dropout: float) -> None:
+    def __init__(self, vocab_size: int, d_model: int, max_len: int) -> None:
         super().__init__()
         self.emb = nn.Embedding(vocab_size, d_model)
         self.pos = PositionalEncoding(d_model, max_len)
-        self.drop = nn.Dropout(dropout)
-        self.scale = math.sqrt(d_model)
 
     def forward(self, x: Tensor) -> Tensor:
-        return self.drop(self.pos(self.emb(x) * self.scale))
+        return self.pos(self.emb(x))
 
 
 class FeedForward(nn.Module):

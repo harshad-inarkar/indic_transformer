@@ -24,7 +24,7 @@ class TransformerEncoder(nn.Module):
         self, vocab_size: int, max_len: int, d_model: int, num_layers: int, num_heads: int, d_ff: int, dropout: float
     ) -> None:
         super().__init__()
-        self.embed = TokenEmbedding(vocab_size, d_model, max_len, dropout)
+        self.embed = TokenEmbedding(vocab_size, d_model, max_len)
         self.layers = nn.ModuleList(
             [EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)]
         )
@@ -41,7 +41,7 @@ class TransformerDecoder(nn.Module):
         self, vocab_size: int, max_len: int, d_model: int, num_layers: int, num_heads: int, d_ff: int, dropout: float
     ) -> None:
         super().__init__()
-        self.embed = TokenEmbedding(vocab_size, d_model, max_len, dropout)
+        self.embed = TokenEmbedding(vocab_size, d_model, max_len)
         self.layers = nn.ModuleList(
             [DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)]
         )
@@ -79,15 +79,6 @@ class MultilingualTransformer(nn.Module):
         super().__init__()
         self.encoder = TransformerEncoder(src_vocab_size, max_len, d_model, num_layers, num_heads, d_ff, dropout)
         self.decoder = TransformerDecoder(tgt_vocab_size, max_len, d_model, num_layers, num_heads, d_ff, dropout)
-        self._init_weights(d_model)
-
-    def _init_weights(self, d_model: int) -> None:
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
-        # Embeddings are multiplied by sqrt(d_model), so init with std = d_model**-0.5.
-        for emb in (self.encoder.embed.emb, self.decoder.embed.emb):
-            nn.init.normal_(emb.weight, mean=0.0, std=d_model**-0.5)
 
     def forward(
         self, src: Tensor, tgt: Tensor, src_mask: Tensor | None = None, tgt_mask: Tensor | None = None
