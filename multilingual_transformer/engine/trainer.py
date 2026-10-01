@@ -112,6 +112,9 @@ class Trainer:
     def fit(self) -> tuple[float, float, float]:
         torch.cuda.reset_peak_memory_stats()
         best_loss = float("inf")
+        
+        self.config.data.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
 
         start_time = time.time()
         for epoch in range(1, self.config.training.epochs + 1):
