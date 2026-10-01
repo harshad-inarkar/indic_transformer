@@ -5,8 +5,19 @@ seed = 42
 # Only these three keys are needed. Language codes (tgt_lang) and lang_pair
 # (e.g. "EN-HI") are derived from configs/language_config.toml.
 [language]
+
+#Hindi, Marathi, Bengali, Gujarati, Kannada, Malayalam, Odia, 
+#Punjabi, Tamil, Telugu, Assamese, Sanskrit, English
 src_lang = "English"
 target_lang = "Hindi"
+
+
+# Hindi          | cfilt/iitb-english-hindi 
+# 11 Indic Lang  | ai4bharat/samanantar
+# Sanskrit       | acomquest/Saamayik
+
+
+Sanskrit    
 dataset_name = "ai4bharat/samanantar"
 
 [data]
@@ -21,6 +32,9 @@ max_length_ratio = 6.0
 force_download = false
 
 [tokenizer]
+
+#bpe, unigram, wordpiece, whitespace, regex
+
 algo_src = "wordpiece"
 algo_tgt = "unigram"
 max_vocab_size = 22400
@@ -44,7 +58,7 @@ bleu_sample = 300     # number of test sentences used for BLEU/chrF
 save_best = false     # false: save latest checkpoint; true: save best-validation checkpoint
 
 [inference]
-sample_source = "config"   # "config" = sentences below, "test" = first num_samples test pairs
+sample_source = "test"   # "config" = sentences below, "test" = first num_samples test pairs
 num_samples = 5            # used when sample_source = "test"
 sample_sentences = [
     "this is a wonderful day",
