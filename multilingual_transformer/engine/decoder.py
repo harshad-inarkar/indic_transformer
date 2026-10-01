@@ -10,6 +10,26 @@ from multilingual_transformer.models.transformer import MultilingualTransformer,
 from multilingual_transformer.utils.helpers import free_memory
 
 
+def _banned_ngram_mask(tgt: torch.Tensor, n: int, vocab_size: int) -> torch.Tensor | None:
+    """(B, V) bool mask: True where emitting that token next would repeat an n-gram already in `tgt`.
+
+    For each hypothesis, find earlier occurrences of its current (n-1)-token suffix and ban the token
+    that followed each one. Fully vectorised (no Python loop over beams).
+    """
+    length = tgt.size(1)
+    if n < 2 or length < n:
+        return None
+    windows = tgt.unfold(1, n, 1)                      # (B, L-n+1, n) every existing n-gram
+    suffix = tgt[:, length - (n - 1):]                 # (B, n-1) the prefix of the n-gram being formed
+    match = (windows[:, :, :-1] == suffix.unsqueeze(1)).all(dim=-1)   # (B, L-n+1)
+    rows, cols = match.nonzero(as_tuple=True)
+    if rows.numel() == 0:
+        return None
+    banned = torch.zeros(tgt.size(0), vocab_size, dtype=torch.bool, device=tgt.device)
+    banned[rows, windows[rows, cols, -1]] = True
+    return banned
+
+
 class TranslationGenerator:
     """Greedy / beam decoding. The encoder runs once per batch; the decoder only projects the last position."""
 
@@ -20,7 +40,9 @@ class TranslationGenerator:
         tgt_tokenizer: Any,
         max_len: int,
         device: torch.device,
+        no_repeat_ngram_size: int = 0,
     ) -> None:
+        self.no_repeat_ngram_size = no_repeat_ngram_size  # beam search only; 0 or 1 disables
         self.src_tok = src_tokenizer
         self.tgt_tok = tgt_tokenizer
         self.max_len = max_len
@@ -91,9 +113,15 @@ class TranslationGenerator:
         beam_size: int = 5,
         batch_size: int = 128,
         length_penalty: float = 1.0,
+        no_repeat_ngram_size: int | None = None,
     ) -> list[str]:
-        """Fully vectorised beam search. Final hypothesis = argmax(score / length**length_penalty)."""
+        """Fully vectorised beam search. Final hypothesis = argmax(score / length**length_penalty).
+
+        `no_repeat_ngram_size` (default: the generator's setting) forbids any n-gram of that size from
+        appearing twice in a hypothesis, which prevents repetition loops.
+        """
         vocab_size = self.tgt_tok.get_vocab_size()
+        n_block = self.no_repeat_ngram_size if no_repeat_ngram_size is None else no_repeat_ngram_size
         k = beam_size
         results = [""] * len(sentences)
 
@@ -112,6 +140,11 @@ class TranslationGenerator:
 
             for _ in range(self.max_len - 1):
                 log_probs = F.log_softmax(self._next_logits(tgt, enc_out, src_mask), dim=-1).view(b, k, vocab_size)
+                # Block repeated n-grams on live beams (finished beams only emit <eos>, so skip them).
+                banned = _banned_ngram_mask(tgt, n_block, vocab_size)
+                if banned is not None:
+                    banned = banned.view(b, k, vocab_size) & ~finished.unsqueeze(-1)
+                    log_probs = log_probs.masked_fill(banned, float("-inf"))
                 # Finished beams may only be extended with <eos> at zero cost.
                 log_probs = log_probs.masked_fill(finished.unsqueeze(-1), float("-inf"))
                 eos_lp = log_probs[..., self.eos_tgt]

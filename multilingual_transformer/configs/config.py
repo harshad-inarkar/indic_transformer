@@ -106,11 +106,14 @@ class InferenceConfig:
     sample_sentences: list[str] = field(default_factory=list)
     sample_source: str = "config"  # "config" = sample_sentences above, "test" = first N test pairs
     num_samples: int = 5  # used when sample_source = "test"
+    no_repeat_ngram_size: int = 3  # beam search: forbid repeating any n-gram of this size (0 = off)
 
     def __post_init__(self) -> None:
         self.sample_source = self.sample_source.lower()
         if self.sample_source not in ("config", "test"):
             raise ValueError("inference.sample_source must be 'config' or 'test'")
+        if self.no_repeat_ngram_size < 0:
+            raise ValueError("inference.no_repeat_ngram_size must be >= 0")
 
 
 @dataclass

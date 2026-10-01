@@ -118,7 +118,10 @@ def main() -> None:
     del trainer, tr_loader, val_loader, tr_ds, val_ds
     free_memory()
 
-    generator = TranslationGenerator(model, tok_src, tok_tgt, cfg.data.max_len, torch.device("cuda"))
+    generator = TranslationGenerator(
+        model, tok_src, tok_tgt, cfg.data.max_len, torch.device("cuda"),
+        no_repeat_ngram_size=cfg.inference.no_repeat_ngram_size,
+    )
     evaluator = TranslationEvaluator(generator)
     gen_bs = cfg.training.gen_batch_size
 

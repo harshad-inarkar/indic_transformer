@@ -31,7 +31,10 @@ def main():
     tok_src, tok_tgt = load_tokenizers(cfg)
     model = load_model(cfg, tok_src, tok_tgt, device)
 
-    generator = TranslationGenerator(model, tok_src, tok_tgt, cfg.data.max_len, device)
+    generator = TranslationGenerator(
+        model, tok_src, tok_tgt, cfg.data.max_len, device,
+        no_repeat_ngram_size=cfg.inference.no_repeat_ngram_size,
+    )
     tgt_code = cfg.language.tgt_lang.upper()
 
     print("\n" + "=" * 50)

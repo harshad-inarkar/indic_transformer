@@ -61,5 +61,8 @@ def launch(config_path: str | None = None) -> widgets.VBox | None:
     model = load_model(cfg, tok_src, tok_tgt, device)
 
     print("Ready! Rendering widget...\n")
-    generator = TranslationGenerator(model, tok_src, tok_tgt, cfg.data.max_len, device)
+    generator = TranslationGenerator(
+        model, tok_src, tok_tgt, cfg.data.max_len, device,
+        no_repeat_ngram_size=cfg.inference.no_repeat_ngram_size,
+    )
     return TranslationWidget(generator, cfg.language.tgt_lang).render()

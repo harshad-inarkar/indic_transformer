@@ -25,6 +25,10 @@ def main() -> None:
     )
     parser.add_argument("--method", choices=["both", "greedy", "beam"], default="both")
     parser.add_argument("--beam-size", type=int, default=5)
+    parser.add_argument(
+        "--no-repeat-ngram", type=int, default=None,
+        help="Beam search n-gram repeat blocking (0 = off). Default: inference.no_repeat_ngram_size from the config",
+    )
     parser.add_argument("--show-samples", action="store_true", help="Print a few predictions next to the references")
     args = parser.parse_args()
 
@@ -57,7 +61,12 @@ def main() -> None:
     print("Loading tokenizers and model... (this takes a few seconds)")
     tok_src, tok_tgt = load_tokenizers(cfg)
     model = load_model(cfg, tok_src, tok_tgt, device)
-    generator = TranslationGenerator(model, tok_src, tok_tgt, cfg.data.max_len, device)
+    generator = TranslationGenerator(
+        model, tok_src, tok_tgt, cfg.data.max_len, device,
+        no_repeat_ngram_size=cfg.inference.no_repeat_ngram_size,
+    )
+    if args.no_repeat_ngram is not None:
+        generator.no_repeat_ngram_size = args.no_repeat_ngram
     evaluator = TranslationEvaluator(generator)
 
     sample_size = args.sample_size if args.sample_size is not None else cfg.training.bleu_sample
@@ -85,6 +94,8 @@ def main() -> None:
     print(f"Tokenizers Used   : SRC = {cfg.tokenizer.algo_src.upper()} | TGT = {cfg.tokenizer.algo_tgt.upper()}")
     print(f"Test Sentences    : {n_eval:,} (of {len(te_src):,} in the test split)")
     print(f"Device            : {device.type}")
+    block = generator.no_repeat_ngram_size
+    print(f"No-Repeat N-gram  : {block if block >= 2 else 'off'} (beam search)")
     print("-" * 70)
     for name, (bleu, chrf) in results.items():
         label = f"{name} (k={args.beam_size})" if name == "Beam Decoding" else name
