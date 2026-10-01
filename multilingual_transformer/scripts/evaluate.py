@@ -31,11 +31,15 @@ def main() -> None:
         help="Beam search n-gram repeat blocking (0 = off). Default: inference.no_repeat_ngram_size from the config",
     )
     parser.add_argument("--show-samples", action="store_true", help="Print a few predictions next to the references")
+    parser.add_argument("--checkpoint", choices=["best", "last"], default=None,
+                        help="Which checkpoint to score (default: chosen by training.save_best)")
     args = parser.parse_args()
 
     cfg = AppConfig.from_toml(args.config)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    ckpt_path = cfg.checkpoint_path()
+    
+    ckpt_path = cfg.checkpoint_path(args.checkpoint)
+
 
     # Guardrail: Ensure train.py was run first
     if not ckpt_path.exists():
@@ -61,7 +65,9 @@ def main() -> None:
 
     print("Loading tokenizers and model... (this takes a few seconds)")
     tok_src, tok_tgt = load_tokenizers(cfg)
-    model = load_model(cfg, tok_src, tok_tgt, device)
+    
+    model = load_model(cfg, tok_src, tok_tgt, device, kind=args.checkpoint)
+
     generator = TranslationGenerator(
         model, tok_src, tok_tgt, cfg.data.max_len, device,
         no_repeat_ngram_size=cfg.inference.no_repeat_ngram_size,

@@ -53,13 +53,13 @@ force_download = false
 
 algo_src = "wordpiece"
 algo_tgt = "unigram"
-max_vocab_size = 16000
+max_vocab_size = 12800
 
 [model]
 d_model = 512
-num_layers = 6
-num_heads = 8
-d_ff = 2048
+num_layers = 4
+num_heads = 4
+d_ff = 1024
 dropout = 0.1
 
 [training]
@@ -70,8 +70,8 @@ weight_decay = 0.01
 label_smoothing = 0.1
 torch_compile = false
 gen_batch_size = 128
-bleu_sample = 3000     # number of test sentences used for BLEU/chrF
-save_best = true     # false: save latest checkpoint; true: save best-validation checkpoint
+bleu_sample = 1000     # number of test sentences used for BLEU/chrF
+save_best = false     # false: use latest checkpoint; true: use best-validation checkpoint
 
 [inference]
 sample_source = "test"   # "config" = sentences below, "test" = first num_samples test pairs

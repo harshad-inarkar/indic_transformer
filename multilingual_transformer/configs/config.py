@@ -153,8 +153,8 @@ class AppConfig:
         )
 
     # ---- shared artifact paths (single source of truth) ----
-    def checkpoint_path(self) -> Path:
-        kind = "best" if self.training.save_best else "last"
+    def checkpoint_path(self, kind: str | None = None) -> Path:
+        kind = kind or ("best" if self.training.save_best else "last")
         return self.data.checkpoint_dir / f"transformer_{self.language.tag}_{kind}.pt"
 
     def tokenizer_path(self, side: str) -> Path:

@@ -115,16 +115,13 @@ def main() -> None:
     trainer = Trainer(model, cfg, tr_loader, val_loader, tok_src, tok_tgt)
     train_time, peak_mem, peak_res = trainer.fit()
 
-    sel = trainer.selected
-    mode = "best validation loss" if cfg.training.save_best else "latest epoch"
     print("\n" + "=" * 70)
-    print("                    SELECTED CHECKPOINT")
+    print("                    SAVED CHECKPOINTS")
     print("=" * 70)
-    print(f"Selection Rule    : {mode} (save_best = {cfg.training.save_best})")
-    print(f"Checkpoint File   : {sel['path']}")
-    print(f"Epoch             : {sel['epoch']} / {cfg.training.epochs}")
-    print(f"Train Loss        : {sel['train_loss']:.4f}")
-    print(f"Val Loss          : {sel['val_loss']:.4f}")
+    for label, info in (("Best (lowest val)", trainer.best_info), ("Final (last epoch)", trainer.last_info)):
+        print(f"{label:<19}: epoch {info['epoch']}/{cfg.training.epochs} | "
+              f"Train {info['train_loss']:.4f} | Val {info['val_loss']:.4f} | {info['path']}")
+    print(f"Used for evaluation: {'best' if cfg.training.save_best else 'final'}")
     print("=" * 70)
 
     # save_best=True evaluates the best-validation weights; otherwise the latest. Free training state first.

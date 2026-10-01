@@ -40,9 +40,9 @@ def build_model(cfg: AppConfig, tok_src: Any, tok_tgt: Any) -> MultilingualTrans
     )
 
 
-def load_model(cfg: AppConfig, tok_src: Any, tok_tgt: Any, device: torch.device) -> MultilingualTransformer:
+def load_model(cfg: AppConfig, tok_src: Any, tok_tgt: Any, device: torch.device, kind: str | None = None) -> MultilingualTransformer:
     model = build_model(cfg, tok_src, tok_tgt)
-    ckpt = torch.load(cfg.checkpoint_path(), map_location="cpu", weights_only=True)
+    ckpt = torch.load(cfg.checkpoint_path(kind), map_location="cpu", weights_only=True)
     model.load_state_dict(ckpt["state_dict"])
     del ckpt
     return model.to(device).eval()

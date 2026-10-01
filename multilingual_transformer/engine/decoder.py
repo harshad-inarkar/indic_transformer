@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from multilingual_transformer.data.dataset import numericalize_batch, pad_batch
 from multilingual_transformer.models.transformer import MultilingualTransformer, make_src_mask, make_tgt_mask
 from multilingual_transformer.utils.helpers import free_memory
+from tqdm.auto import tqdm
 
 
 def _banned_ngram_mask(tgt: torch.Tensor, n: int, vocab_size: int) -> torch.Tensor | None:
@@ -73,6 +74,12 @@ class TranslationGenerator:
             src = pad_batch([ids[i] for i in idx], self.pad_src).to(self.device)
             yield idx, src, make_src_mask(src, self.pad_src)
 
+    @staticmethod
+    def _progress(batches, n_sentences: int, batch_size: int, desc: str):
+        n_batches = -(-n_sentences // batch_size)
+        # Hidden for single-batch calls (interactive REPL / widget) to avoid noise
+        return tqdm(batches, total=n_batches, desc=desc, leave=False, disable=n_batches <= 1)
+
     def _next_logits(self, tgt: torch.Tensor, enc_out: torch.Tensor, src_mask: torch.Tensor) -> torch.Tensor:
         tgt_mask = make_tgt_mask(tgt, self.pad_tgt)
         with self._autocast():
@@ -87,7 +94,10 @@ class TranslationGenerator:
     @torch.inference_mode()
     def batched_greedy_decode(self, sentences: list[str], batch_size: int = 128) -> list[str]:
         results = [""] * len(sentences)
-        for idx, src, src_mask in self._batches(sentences, batch_size):
+                # in batched_greedy_decode
+        for idx, src, src_mask in self._progress(
+            self._batches(sentences, batch_size), len(sentences), batch_size, "Greedy decode"
+        ):
             with self._autocast():
                 enc_out = self.model.encoder(src, src_mask)
 
@@ -125,7 +135,10 @@ class TranslationGenerator:
         k = beam_size
         results = [""] * len(sentences)
 
-        for idx, src, src_mask in self._batches(sentences, batch_size):
+        # in batched_beam_decode
+        for idx, src, src_mask in self._progress(
+            self._batches(sentences, batch_size), len(sentences), batch_size, f"Beam decode (k={k})"
+        ):
             b = len(idx)
             with self._autocast():
                 enc_out = self.model.encoder(src, src_mask)
