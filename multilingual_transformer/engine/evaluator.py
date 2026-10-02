@@ -1,82 +1,49 @@
 from __future__ import annotations
 
-import re
 import unicodedata
 from typing import TYPE_CHECKING
 
-import numpy as np
-from nltk.translate.bleu_score import SmoothingFunction, corpus_bleu
-from nltk.translate.chrf_score import sentence_chrf
+from sacrebleu.metrics import BLEU, CHRF
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # avoids importing torch just to score text
     from multilingual_transformer.engine.decoder import TranslationGenerator
-
-# Indic numerals (Devanagari, Bengali, Gujarati, Odia, Gurmukhi, Tamil, Telugu, Kannada, Malayalam)
-INDIC_DIGITS = (
-    "०१२३४५६७८९"  # Devanagari / Hindi / Marathi / Sanskrit
-    "০১২৩৪৫৬৭৮৯"  # Bengali / Assamese
-    "૦૧૨૩૪૫૬૭૮૯"  # Gujarati
-    "୦୧୨୩୪୫୬୭୮୯"  # Odia
-    "੦੧੨੩੪੫੬੭੮੯"  # Gurmukhi / Punjabi
-    "௦௧௨௩௪௫௬௭௮௯"  # Tamil
-    "౦౧౨౩౪౫౬౭౮౯"  # Telugu
-    "೦೧೨೩೪೫೬೭೮೯"  # Kannada
-    "൦൧൨൩൪൫൬൭൮൯"  # Malayalam
-)
-ARABIC_DIGITS = "0123456789" * 9
-DIGIT_TRANSLATION_TABLE = str.maketrans(INDIC_DIGITS, ARABIC_DIGITS)
-
-
-def normalize_indic_text(text: str) -> str:
-    """Canonical text pre-processing applied equally to hypotheses and references.
-    
-    1. Lowercases Latin script tokens (English loanwords/acronyms).
-    2. NFKC-normalises decomposed/precomposed glyphs and nuktas.
-    3. Normalises pipe '|' and double pipes '||' to Devanagari danda '।' and double danda '॥'.
-    4. Canonicalises Indic script digits to standard Arabic numerals (0-9).
-    5. Strips redundant whitespace and removes control formatting characters (ZWJ, ZWNJ, BOM).
-    """
-    if not text:
-        return ""
-
-    # 1. Lowercase
-    text = text.lower()
-
-    # 2. Canonical Unicode normalization
-    text = unicodedata.normalize("NFKC", text)
-
-    # 3. Replace ASCII pipes with authentic Indic danda / double danda
-    text = text.replace("||", "॥").replace("|", "।")
-
-    # 4. Canonicalize numerals
-    text = text.translate(DIGIT_TRANSLATION_TABLE)
-
-    # 5. Remove zero-width & formatting control chars (Unicode category 'Cf')
-    cleaned = [ch for ch in text if unicodedata.category(ch) != "Cf"]
-    text = "".join(cleaned)
-
-    # 6. Normalize whitespace
-    return re.sub(r"\s+", " ", text).strip()
-
-
-def tokenize_for_metrics(text: str) -> list[str]:
-    """Script-aware tokenisation for BLEU and chrF over normalized text.
-
-    - Splits punctuation and symbols (categories P* and S*, including danda '।') into distinct tokens.
-    - Preserves combining marks (vowel signs/matras and viramas - category M*).
-    """
-    norm_text = normalize_indic_text(text)
-    out: list[str] = []
-    for ch in norm_text:
-        cat = unicodedata.category(ch)
-        # Pad punctuation/symbols with spaces so punctuation splits cleanly without fragmenting words
-        out.append(f" {ch} " if cat[0] in "PS" else ch)
-    return "".join(out).split()
 
 
 class TranslationEvaluator:
-    def __init__(self, generator: TranslationGenerator) -> None:
+    """Corpus-level BLEU and chrF via sacreBLEU, the de-facto reference implementation.
+
+    Metric choices (all reported in `self.signatures` after each `evaluate` call, so scores are reproducible):
+      * BLEU   - corpus-level, sacreBLEU default smoothing ("exp"), tokenize="intl". The default "13a"
+                 tokenizer only splits ASCII punctuation, so the Hindi danda "।" stays glued to the
+                 previous word ("है।" != "है ।"). "intl" splits Unicode punctuation/symbols and keeps
+                 Indic combining marks (matras, viramas) inside words.
+      * chrF   - corpus-level character n-grams (sacreBLEU default: char order 6, beta 2). Set
+                 `chrf_word_order=2` for chrF++ (adds word uni/bi-grams).
+      * lowercase=True - the model is trained on lowercased text, so scoring is case-insensitive.
+                 Pass lowercase=False for case-sensitive scoring.
+      * Unicode NFC applied to hypotheses and references only. This merges canonically-equivalent
+        encodings (e.g. a precomposed nukta letter vs base letter + nukta); no other rewriting is done.
+        Notably there is NO mapping of digit scripts, danda variants, etc.: a hypothesis that writes
+        "५०" where the reference has "50" is a genuine surface mismatch and is scored as one.
+    """
+
+    def __init__(
+        self,
+        generator: TranslationGenerator,
+        bleu_tokenize: str = "intl",
+        chrf_word_order: int = 0,
+        lowercase: bool = True,
+        normalize_unicode: bool = True,
+    ) -> None:
         self.generator = generator
+        self.bleu_tokenize = bleu_tokenize
+        self.chrf_word_order = chrf_word_order
+        self.lowercase = lowercase
+        self.normalize_unicode = normalize_unicode
+        self.signatures: dict[str, str] = {}
+
+    def _prep(self, text: str) -> str:
+        return unicodedata.normalize("NFC", text) if self.normalize_unicode else text
 
     def evaluate(
         self,
@@ -85,7 +52,7 @@ class TranslationEvaluator:
         method: str = "beam",
         beam_size: int = 5,
         batch_size: int = 128,
-        sample_size: int = 300,
+        sample_size: int = 500,
     ) -> tuple[float, float, list[dict[str, str]]]:
         n = min(sample_size, len(sources))
         src_subset, ref_subset = sources[:n], references[:n]
@@ -95,29 +62,18 @@ class TranslationEvaluator:
         else:
             preds = self.generator.batched_greedy_decode(src_subset, batch_size=batch_size)
 
-        # Both reference and hypothesis pass through identical normalization and tokenization
-        ref_toks = [tokenize_for_metrics(r) for r in ref_subset]
-        hyp_toks = [tokenize_for_metrics(p) for p in preds]
+        hyps = [self._prep(p) for p in preds]
+        refs = [self._prep(r) for r in ref_subset]
 
-        # Corpus-level BLEU on script-aware tokens with smoothing
-        bleu = corpus_bleu(
-            [[r] for r in ref_toks],
-            hyp_toks,
-            smoothing_function=SmoothingFunction().method1,
-        )
+        # Fresh metric objects per call: sacreBLEU metrics keep per-evaluation state for the signature.
+        bleu_metric = BLEU(tokenize=self.bleu_tokenize, lowercase=self.lowercase)
+        chrf_metric = CHRF(word_order=self.chrf_word_order, lowercase=self.lowercase)
+        bleu = bleu_metric.corpus_score(hyps, [refs]).score
+        chrf = chrf_metric.corpus_score(hyps, [refs]).score
+        self.signatures = {
+            "bleu": str(bleu_metric.get_signature()),
+            "chrf": str(chrf_metric.get_signature()),
+        }
 
-        # chrF on normalized strings (whitespace ignored)
-        chrf = float(
-            np.mean(
-                [
-                    sentence_chrf(" ".join(r), " ".join(h)) if h else 0.0
-                    for r, h in zip(ref_toks, hyp_toks)
-                ]
-            )
-        )
-
-        samples = [
-            {"src": src_subset[i], "ref": ref_subset[i], "pred": preds[i]}
-            for i in range(min(5, n))
-        ]
-        return float(bleu * 100), chrf * 100, samples
+        samples = [{"src": src_subset[i], "ref": ref_subset[i], "pred": preds[i]} for i in range(min(5, n))]
+        return float(bleu), float(chrf), samples

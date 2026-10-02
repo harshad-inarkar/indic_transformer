@@ -65,7 +65,7 @@ def main() -> None:
 
     print("Loading tokenizers and model... (this takes a few seconds)")
     tok_src, tok_tgt = load_tokenizers(cfg)
-    
+
     model = load_model(cfg, tok_src, tok_tgt, device, kind=args.checkpoint)
 
     generator = TranslationGenerator(
@@ -107,6 +107,10 @@ def main() -> None:
     for name, (bleu, chrf) in results.items():
         label = f"{name} (k={args.beam_size})" if name == "Beam Decoding" else name
         print(f"{label:<20}-> BLEU: {bleu:5.2f} | CHRF: {chrf:5.2f}")
+    
+    print(f"BLEU signature: {evaluator.signatures.get('bleu')}")
+    print(f"chrF signature: {evaluator.signatures.get('chrf')}")
+
     print("=" * 70 + "\n")
 
     if args.show_samples:

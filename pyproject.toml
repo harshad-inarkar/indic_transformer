@@ -12,7 +12,7 @@ dependencies = [
     "torch",
     "tokenizers",
     "datasets",
-    "nltk",
+    "sacrebleu",
     "numpy",
     "tqdm",
     "ipywidgets",
