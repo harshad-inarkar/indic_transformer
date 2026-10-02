@@ -53,7 +53,7 @@ force_download = false
 
 algo_src = "wordpiece"
 algo_tgt = "unigram"
-max_vocab_size = 12800
+max_vocab_size = 16000
 
 [model]
 d_model = 512
@@ -74,6 +74,7 @@ bleu_sample = 1000     # number of test sentences used for BLEU/chrF
 save_best = true     # false: use latest checkpoint; true: use best-validation checkpoint
 
 [inference]
+no_repeat_ngram_size = 3
 sample_source = "config"   # "config" = sentences below, "test" = first num_samples test pairs
 num_samples = 5            # used when sample_source = "test"
 sample_sentences = [
