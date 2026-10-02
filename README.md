@@ -67,12 +67,19 @@ Or build your own notebook with the cells below. Run each block as a separate ce
 **1. Clone and install**
 
 ```python
-%cd /content
+# Cell 1: Setup, Install, and Create Working Directory
+base_dir = '/content'
+repo_dir = 'multilingual_transformer'
+work_dir = f"{base_dir}/{repo_dir}/work_dir"
+
+%cd {base_dir}
+
 !rm -rf multilingual_transformer
 !git clone https://github.com/harshad-inarkar/multilingual_transformer.git
 %cd multilingual_transformer
 !pip install -q -e .
-!mkdir -p work_dir
+!mkdir -p {work_dir}
+
 ```
 
 **2. (Optional) Edit the configuration from a cell**
@@ -83,7 +90,7 @@ You can open `multilingual_transformer/configs/transformer_config.toml` in the C
 **3. Train** (downloads data, trains tokenizers, trains the model, reports BLEU/chrF on the test split)
 
 ```python
-%cd /content/multilingual_transformer/work_dir
+%cd {work_dir}
 !python -m multilingual_transformer.scripts.train
 ```
 
@@ -92,7 +99,7 @@ Run from the same directory as training, because the checkpoint and tokenizers a
 
 
 ```python
-%cd /content/multilingual_transformer/work_dir
+%cd {work_dir}
 !python -m multilingual_transformer.scripts.interactive
 ```
 
@@ -101,11 +108,10 @@ Run from the same directory as training, because the checkpoint and tokenizers a
 Run from the same directory as training, because the checkpoint and tokenizers are found relative to it:
 
 ```python
-%cd /content/multilingual_transformer/work_dir
+%cd {work_dir}
 from multilingual_transformer.ui.widget import launch
 launch()
 ```
-
 
 ## Configuration
 
