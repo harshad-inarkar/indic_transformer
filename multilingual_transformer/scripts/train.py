@@ -37,7 +37,14 @@ def print_stats_table(
     print(f"Tokenizers Used   : SRC = {config.tokenizer.algo_src.upper()} | TGT = {config.tokenizer.algo_tgt.upper()}")
     print(f"Vocab Sizes       : SRC = {src_vocab_sz:,} | TGT = {tgt_vocab_sz:,}")
     print(f"Model Parameters  : {n_params:,} ({n_params * 4 / 1024**2:.1f} MB fp32)")
+    
+    print(f"d_model           : {config.model.d_model}")
+    print(f"num_layers        : {config.model.num_layers}")
+    print(f"num_heads         : {config.model.num_heads}")
+    print(f"d_ff              : {config.model.d_ff}")
+    print(f"dropout           : {config.model.dropout}")
     print("-" * 70)
+    
     print(f"Epochs            : {config.training.epochs}")
     print(f"Train/Val/Test    : {config.data.train_size:,} / {config.data.val_size:,} / {config.data.test_size:,}")
     print(f"BlEU Samples      : {config.training.bleu_sample}")
@@ -158,6 +165,9 @@ def main() -> None:
         tok_src.get_vocab_size(),
         tok_tgt.get_vocab_size(),
     )
+
+    print(f"\nBLEU signature: {evaluator.signatures.get('bleu')}")
+    print(f"chrF signature: {evaluator.signatures.get('chrf')}")
 
     if cfg.inference.sample_source == "test":
         k = min(cfg.inference.num_samples, len(te_src))
