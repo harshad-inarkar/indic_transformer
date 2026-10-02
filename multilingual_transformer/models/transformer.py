@@ -88,3 +88,5 @@ class MultilingualTransformer(nn.Module):
     ) -> Tensor:
         enc_out = self.encoder(src, src_mask)
         return self.decoder(tgt, enc_out, src_mask, tgt_mask)
+
+        

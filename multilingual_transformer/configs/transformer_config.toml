@@ -21,7 +21,7 @@ Sanskrit  = "sa"
 
 
 # Only these three keys are needed. Language codes (tgt_lang) and lang_pair
-# (e.g. "EN-HI") are derived from configs/language_config.toml.
+
 [language]
 
 #Hindi, Marathi, Bengali, Gujarati, Kannada, Malayalam, Odia, 
@@ -84,4 +84,3 @@ sample_sentences = [
     "She is smart girl",
     "he is a great teacher",
 ]
-
