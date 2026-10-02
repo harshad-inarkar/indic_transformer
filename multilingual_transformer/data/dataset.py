@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -107,15 +108,19 @@ class DataPipeline:
         tag = self.lang_pair.lower().replace("-", "_")
         return {name: self.data_dir / f"{name}_{tag}_{n}.jsonl" for name, n in sizes.items()}
 
-    def _open_stream(self) -> Any:
+    def _open_dataset(self) -> Any:
         args: tuple[str, ...] = (self.dataset_name,)
         if self.dataset_name not in ("cfilt/iitb-english-hindi", "acomquest/Saamayik"):
             args = (self.dataset_name, self.tgt_lang)
+        
+        # Download fully to disk and memory-map via Arrow, removing streaming constraint
         try:
-            ds = load_dataset(*args, split="train", streaming=True)
+            ds = load_dataset(*args, split="train")
         except (TypeError, ValueError, RuntimeError):
-            ds = load_dataset(*args, split="train", streaming=True)
-        return ds.shuffle(seed=self.seed, buffer_size=10_000)
+            ds = load_dataset(*args, split="train")
+            
+        # Global shuffle across all millions of rows using the Arrow backend
+        return ds.shuffle(seed=self.seed)
 
     def _extract_pair(self, row: dict[str, Any]) -> tuple[str, str]:
         if self.dataset_name == "cfilt/iitb-english-hindi":
@@ -139,12 +144,12 @@ class DataPipeline:
             return tuple(out)  # type: ignore[return-value]
 
         total = sum(sizes.values())
-        ds = self._open_stream()
+        ds = self._open_dataset()
 
         src: list[str] = []
         tgt: list[str] = []
         seen: set[str] = set()  # de-duplicate on source so splits cannot leak into each other
-        print(f"Streaming and filtering {total:,} random clean pairs from {self.dataset_name}...")
+        print(f"Filtering {total:,} random clean pairs from the Arrow-backed dataset {self.dataset_name}...")
 
         with tqdm(total=total, desc="Extracting Pairs") as pbar:
             for row in ds:
@@ -200,12 +205,15 @@ class DataPipeline:
 
     @staticmethod
     def create_loader(dataset: TranslationDataset, batch_size: int, shuffle: bool) -> DataLoader:
-        # Data is pre-tokenised, so collation is trivial: no worker processes needed.
+        cpu_workers = min(4, os.cpu_count() or 2)
+        
         return DataLoader(
             dataset,
             batch_size=batch_size,
             shuffle=shuffle,
             pin_memory=torch.cuda.is_available(),
-            num_workers=0,
+            num_workers=cpu_workers,
+            prefetch_factor=2 if cpu_workers > 0 else None,
+            persistent_workers=True if cpu_workers > 0 else False,
             collate_fn=PadCollator(dataset.pad_src, dataset.pad_tgt),
         )
