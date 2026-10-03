@@ -1,4 +1,62 @@
 
+
+/content/multilingual_transformer/work_dir
+
+==================================================
+          INITIALIZING TRAINING PIPELINE
+==================================================
+Dataset Name : ai4bharat/samanantar
+Language     : Hindi (hi)
+Epochs       : 10
+Train Size   : 100000
+Val Size     : 10000
+Test Size    : 10000
+Save Best    : True
+GPUs Active  : 1
+==================================================
+
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 59879    /    59879
+[00:00:00] Count pairs                    ██████████████████ 59879    /    59879
+[00:00:00] Compute merges                 ██████████████████ 15893    /    15893
+[00:00:00] Suffix array seeds             ██████████████████ 91913    /    91913
+[00:00:12] EM training                    ██████████████████ 14       /       14
+Epoch  1/10 | Time: 0m 53s | Train Loss: 6.7925 | Val Loss: 5.1260
+Epoch  2/10 | Time: 0m 57s | Train Loss: 5.0929 | Val Loss: 4.2707
+Epoch  3/10 | Time: 0m 56s | Train Loss: 4.4784 | Val Loss: 3.9488
+Epoch  4/10 | Time: 0m 57s | Train Loss: 4.0801 | Val Loss: 3.7585
+Epoch  5/10 | Time: 0m 57s | Train Loss: 3.7537 | Val Loss: 3.6743
+Epoch  6/10 | Time: 0m 56s | Train Loss: 3.4648 | Val Loss: 3.6304
+Epoch  7/10 | Time: 0m 57s | Train Loss: 3.2147 | Val Loss: 3.6329
+Epoch  8/10 | Time: 0m 56s | Train Loss: 3.0237 | Val Loss: 3.6436
+Epoch  9/10 | Time: 0m 56s | Train Loss: 2.9028 | Val Loss: 3.6585
+Epoch 10/10 | Time: 0m 56s | Train Loss: 2.8492 | Val Loss: 3.6613
+
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 16,000 | TGT = 16,000
+Model Parameters  : 45,580,288 (173.9 MB fp32)
+d_model/layers    : 512 / 4
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 100,000 / 10,000 / 10,000
+BlEU Samples      : 5000
+Batch Size        : 256 (Train) | 256 (Eval)
+Steps per Epoch   : 391
+Total Train Time  : 9.90 minutes
+Peak GPU          : 9.32 GB
+Peak Reserved GPU : 15.21 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  6.83 | CHRF: 25.50
+Beam Decoding     -> BLEU:  7.57 | CHRF: 26.69
+======================================================================
+
+
+---
 ==================================================
           INITIALIZING TRAINING PIPELINE
 ==================================================
