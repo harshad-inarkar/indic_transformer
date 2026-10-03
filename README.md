@@ -61,7 +61,7 @@ mkdir -p work_dir && cd work_dir
 python -m multilingual_transformer.scripts.multilingual_train          
 
 # Interactive testing with prefix target forcing (e.g., "mr: how are you?")
-python -m multilingual_transformer.scripts.multilingual_interactive_3    
+python -m multilingual_transformer.scripts.multilingual_interactive
 
 ```
 
@@ -71,7 +71,7 @@ You can run interactive translation testing directly inside a notebook. The widg
 
 ```python
 # For One-to-One Models
-from multilingual_transformer.ui.widget_2 import launch
+from multilingual_transformer.ui.widget import launch
 launch()
 
 # For Universal Multilingual Models
