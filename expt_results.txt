@@ -17,6 +17,66 @@ GPUs Active  : 1
 
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
 Filtering 120,000 random clean pairs from the Arrow-backed dataset ai4bharat/samanantar...
+Extracting Pairs: 100% 120000/120000 [00:09<00:00, 12122.51it/s]
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 59879    /    59879
+[00:00:00] Count pairs                    ██████████████████ 59879    /    59879
+[00:00:00] Compute merges                 ██████████████████ 15893    /    15893
+[00:00:00] Suffix array seeds             ██████████████████ 91913    /    91913
+[00:00:14] EM training                    ██████████████████ 14       /       14
+Epoch  1/10 | Time: 0m 33s | Train Loss: 7.2179 | Val Loss: 5.4914
+Epoch  2/10 | Time: 0m 34s | Train Loss: 5.4377 | Val Loss: 4.6142
+Epoch  3/10 | Time: 0m 34s | Train Loss: 4.8728 | Val Loss: 4.2618
+Epoch  4/10 | Time: 0m 34s | Train Loss: 4.5366 | Val Loss: 4.0526
+Epoch  5/10 | Time: 0m 34s | Train Loss: 4.2916 | Val Loss: 3.9148
+Epoch  6/10 | Time: 0m 34s | Train Loss: 4.1009 | Val Loss: 3.8425
+Epoch  7/10 | Time: 0m 34s | Train Loss: 3.9502 | Val Loss: 3.8018
+Epoch  8/10 | Time: 0m 34s | Train Loss: 3.8406 | Val Loss: 3.7766
+Epoch  9/10 | Time: 0m 34s | Train Loss: 3.7710 | Val Loss: 3.7701
+Epoch 10/10 | Time: 0m 34s | Train Loss: 3.7398 | Val Loss: 3.7691
+
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 16,000 | TGT = 16,000
+Model Parameters  : 18,597,888 (70.9 MB fp32)
+Transformer Arch  : d_model 256 / num_layers 4/ d_ff 768
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 100,000 / 10,000 / 10,000
+BlEU Samples      : 5000
+Batch Size        : 256 (Train) | 256 (Eval)
+Steps per Epoch   : 391
+Total Train Time  : 5.85 minutes
+Peak GPU          : 7.96 GB
+Peak Reserved GPU : 13.32 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  6.26 | CHRF: 24.70
+Beam Decoding     -> BLEU:  7.47 | CHRF: 26.63
+======================================================================
+
+
+----
+/content/multilingual_transformer/work_dir
+
+==================================================
+          INITIALIZING TRAINING PIPELINE
+==================================================
+Dataset Name : ai4bharat/samanantar
+Language     : Hindi (hi)
+Epochs       : 10
+Train Size   : 100000
+Val Size     : 10000
+Test Size    : 10000
+Save Best    : True
+GPUs Active  : 1
+==================================================
+
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Filtering 120,000 random clean pairs from the Arrow-backed dataset ai4bharat/samanantar...
 Extracting Pairs: 100% 120000/120000 [00:09<00:00, 12393.01it/s]
 Training tokenizers...
 [00:00:00] Tokenize words                 ██████████████████ 59879    /    59879

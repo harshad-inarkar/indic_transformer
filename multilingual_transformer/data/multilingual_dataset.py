@@ -135,8 +135,6 @@ class MultilingualDataPipeline:
             dataset,
             batch_sampler=sampler,
             pin_memory=torch.cuda.is_available(),
-            num_workers=workers,
-            prefetch_factor=2,
-            persistent_workers=True,
+            num_workers=0,
             collate_fn=PadCollator(dataset.pad_src, dataset.pad_tgt),
         )
