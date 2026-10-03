@@ -51,16 +51,6 @@ class TokenEmbedding(nn.Module):
 #         return self.fc2(F.silu(gate) * value)
 
 
-# class FeedForward(nn.Module):
-#     def __init__(self, d_model: int, d_ff: int) -> None:
-#         super().__init__()
-#         self.fc1 = nn.Linear(d_model, d_ff)
-#         self.fc2 = nn.Linear(d_ff, d_model)
-
-#     def forward(self, x: Tensor) -> Tensor:
-#         # Squared ReLU activation: max(0, x)^2
-#         return self.fc2(F.relu(self.fc1(x)) ** 2)
-
 class FeedForward(nn.Module):
     def __init__(self, d_model: int, d_ff: int) -> None:
         super().__init__()
@@ -68,8 +58,18 @@ class FeedForward(nn.Module):
         self.fc2 = nn.Linear(d_ff, d_model)
 
     def forward(self, x: Tensor) -> Tensor:
-        # SiLU (Swish) activation: x * sigmoid(x)
-        return self.fc2(F.silu(self.fc1(x)))
+        # Squared ReLU activation: max(0, x)^2
+        return self.fc2(F.relu(self.fc1(x)) ** 2)
+
+# class FeedForward(nn.Module):
+#     def __init__(self, d_model: int, d_ff: int) -> None:
+#         super().__init__()
+#         self.fc1 = nn.Linear(d_model, d_ff)
+#         self.fc2 = nn.Linear(d_ff, d_model)
+
+#     def forward(self, x: Tensor) -> Tensor:
+#         # SiLU (Swish) activation: x * sigmoid(x)
+#         return self.fc2(F.silu(self.fc1(x)))
 
 class EncoderLayer(nn.Module):
     def __init__(self, d_model: int, num_heads: int, d_ff: int, dropout: float) -> None:

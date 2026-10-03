@@ -17,7 +17,7 @@ from multilingual_transformer.engine.trainer import Trainer
 from multilingual_transformer.models.transformer import MultilingualTransformer
 from multilingual_transformer.utils.distributed import barrier, run_auto_distributed
 from multilingual_transformer.utils.helpers import free_memory, set_seed
-
+import pickle
 
 def print_multilingual_stats_table(
     cfg: AppConfig, n_params: int, train_loader_len: int, total_time: float,
@@ -90,13 +90,21 @@ def multilingual_worker(rank: int, world_size: int, config_path: str) -> None:
     )
 
     shared_tok_path = cfg.data.tokenizer_dir / f"multilingual_shared_{cfg.tokenizer.max_vocab_size}.json"
+    corpus_cache_path = cfg.data.data_dir / "multilingual_corpus_cache.pkl"
 
+    # Rank 0 creates and caches the dataset; other ranks wait
     if is_main:
+        cfg.data.data_dir.mkdir(parents=True, exist_ok=True)
         corpus = pipeline.acquire_multilingual_corpus(
             pairs_per_lang=raw_cfg["multilingual"]["pairs_per_lang"],
             val_per_lang=raw_cfg["multilingual"]["val_size_per_lang"],
             test_per_lang=raw_cfg["multilingual"]["test_size_per_lang"],
         )
+        
+        # Save exact corpus dict to ensure identical lengths on all ranks
+        with open(corpus_cache_path, "wb") as f:
+            pickle.dump(corpus, f)
+            
         print("Training shared multilingual tokenizer...")
         combined_texts = corpus["train_src"] + corpus["train_tgt"]
         shared_tok = MultilingualTokenizerManager.train(
@@ -104,14 +112,13 @@ def multilingual_worker(rank: int, world_size: int, config_path: str) -> None:
         )
         cfg.data.tokenizer_dir.mkdir(parents=True, exist_ok=True)
         MultilingualTokenizerManager.save(shared_tok, shared_tok_path)
-    barrier()
+        
+    barrier()  # Wait for Rank 0 to finish processing and writing to disk
 
+    # Other ranks load the exact same processed corpus
     if not is_main:
-        corpus = pipeline.acquire_multilingual_corpus(
-            pairs_per_lang=raw_cfg["multilingual"]["pairs_per_lang"],
-            val_per_lang=raw_cfg["multilingual"]["val_size_per_lang"],
-            test_per_lang=raw_cfg["multilingual"]["test_size_per_lang"],
-        )
+        with open(corpus_cache_path, "rb") as f:
+            corpus = pickle.load(f)
         shared_tok = MultilingualTokenizerManager.load(shared_tok_path)
 
     tr_ds = TranslationDataset(corpus["train_src"], corpus["train_tgt"], shared_tok, shared_tok, cfg.data.max_len)
