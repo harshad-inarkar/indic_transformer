@@ -62,10 +62,11 @@ def main() -> None:
     print("Type 'q' to quit.")
     print("=" * 60 + "\n")
 
+
     while True:
         try:
             # Fixed: Removed the leading '\n' that breaks Colab's input box rendering
-            raw_input = input(f"Enter [lang]: [text] (e.g. 'hi: hello') [or 'q' to quit]: ").strip()
+            raw_input = input(f"Enter: ").strip()
             
             if not raw_input:
                 continue
