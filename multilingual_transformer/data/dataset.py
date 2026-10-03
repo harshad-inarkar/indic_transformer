@@ -11,7 +11,8 @@ from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm
 
-# Which target-language codes each known dataset provides (source is always English).
+from multilingual_transformer.data.sampler import BucketBatchSampler
+
 DATASET_LANGS: dict[str, set[str]] = {
     "cfilt/iitb-english-hindi": {"hi"},
     "acomquest/Saamayik": {"sa"},
@@ -27,7 +28,6 @@ def is_clean_pair(en: str, tgt: str, max_len: int, max_ratio: float) -> bool:
 
 
 def numericalize_batch(texts: list[str], tokenizer: Any, max_len: int) -> list[list[int]]:
-    """Batch-encode (Rust-parallel) to <sos> ids <eos>, truncating so <eos> is never lost."""
     sos_id = tokenizer.token_to_id("<sos>")
     eos_id = tokenizer.token_to_id("<eos>")
     encoded = tokenizer.encode_batch([t.lower() for t in texts])
@@ -35,7 +35,6 @@ def numericalize_batch(texts: list[str], tokenizer: Any, max_len: int) -> list[l
 
 
 def pad_batch(seqs: list[list[int]], pad_idx: int) -> Tensor:
-    """Pad to the longest sequence in the batch (dynamic padding)."""
     out = torch.full((len(seqs), max(len(s) for s in seqs)), pad_idx, dtype=torch.long)
     for i, s in enumerate(seqs):
         out[i, : len(s)] = torch.tensor(s, dtype=torch.long)
@@ -53,8 +52,6 @@ class PadCollator:
 
 
 class TranslationDataset(Dataset):
-    """Pre-tokenises once at construction; raw text is not kept (saves memory and per-step work)."""
-
     def __init__(
         self,
         src_texts: list[str],
@@ -103,7 +100,6 @@ class DataPipeline:
         self.max_ratio = max_ratio
         self.seed = seed
 
-    # ---- corpus acquisition ----
     def _cache_paths(self, sizes: dict[str, int]) -> dict[str, Path]:
         tag = self.lang_pair.lower().replace("-", "_")
         return {name: self.data_dir / f"{name}_{tag}_{n}.jsonl" for name, n in sizes.items()}
@@ -112,14 +108,10 @@ class DataPipeline:
         args: tuple[str, ...] = (self.dataset_name,)
         if self.dataset_name not in ("cfilt/iitb-english-hindi", "acomquest/Saamayik"):
             args = (self.dataset_name, self.tgt_lang)
-        
-        # Download fully to disk and memory-map via Arrow, removing streaming constraint
         try:
             ds = load_dataset(*args, split="train")
         except (TypeError, ValueError, RuntimeError):
             ds = load_dataset(*args, split="train")
-            
-        # Global shuffle across all millions of rows using the Arrow backend
         return ds.shuffle(seed=self.seed)
 
     def _extract_pair(self, row: dict[str, Any]) -> tuple[str, str]:
@@ -127,28 +119,27 @@ class DataPipeline:
             rec = row["translation"]
         elif self.dataset_name == "acomquest/Saamayik":
             rec = row.get("translation", row)
-        else:  # samanantar-style: {"src": ..., "tgt": ...}
+        else:
             return str(row["src"]).strip(), str(row["tgt"]).strip()
         return str(rec.get(self.src_lang, "")).strip(), str(rec.get(self.tgt_lang, "")).strip()
 
     def acquire_corpus(
         self, train_size: int, val_size: int, test_size: int, force_download: bool = False
     ) -> tuple[list[str], list[str], list[str], list[str], list[str], list[str]]:
-        """Returns (train_src, train_tgt, val_src, val_tgt, test_src, test_tgt); the three splits are disjoint."""
         sizes = {"train": train_size, "val": val_size, "test": test_size}
         paths = self._cache_paths(sizes)
         if not force_download and all(p.exists() for p in paths.values()):
             out: list[list[str]] = []
             for p in paths.values():
                 out.extend(self._load_jsonl(p))
-            return tuple(out)  # type: ignore[return-value]
+            return tuple(out)
 
         total = sum(sizes.values())
         ds = self._open_dataset()
 
         src: list[str] = []
         tgt: list[str] = []
-        seen: set[str] = set()  # de-duplicate on source so splits cannot leak into each other
+        seen: set[str] = set()
         print(f"Filtering {total:,} random clean pairs from the Arrow-backed dataset {self.dataset_name}...")
 
         with tqdm(total=total, desc="Extracting Pairs") as pbar:
@@ -165,7 +156,6 @@ class DataPipeline:
                     break
         del seen, ds
 
-        # Sequential disjoint slices; scaled proportionally if the stream yielded fewer pairs than requested.
         bounds, cum = [0], 0
         for n in sizes.values():
             cum += n
@@ -176,10 +166,9 @@ class DataPipeline:
             self._save_jsonl(paths[name], s_part, t_part)
             out.extend([s_part, t_part])
         del src, tgt
-        return tuple(out)  # type: ignore[return-value]
+        return tuple(out)
 
     def load_cached_split(self, name: str, size: int) -> tuple[list[str], list[str]]:
-        """Load one cached split ("train" / "val" / "test") written by acquire_corpus; never downloads."""
         path = self._cache_paths({name: size})[name]
         if not path.exists():
             raise FileNotFoundError(f"Cached {name} split not found at {path}. Run training first.")
@@ -204,17 +193,25 @@ class DataPipeline:
         return src, tgt
 
     @staticmethod
-    def create_loader(dataset: TranslationDataset, batch_size: int, shuffle: bool) -> DataLoader:
-        cpu_workers = min(4, os.cpu_count() or 2)
-        
+    def create_loader(
+        dataset: TranslationDataset,
+        batch_size: int,
+        shuffle: bool,
+        rank: int = 0,
+        world_size: int = 1,
+        seed: int = 0,
+    ) -> DataLoader:
+        lengths = [max(len(s), len(t)) for s, t in zip(dataset.src_ids, dataset.tgt_ids)]
+        sampler = BucketBatchSampler(
+            lengths, batch_size, shuffle=shuffle, seed=seed, rank=rank, world_size=world_size
+        )
+        workers = max(1, min(4, (os.cpu_count() or 2) // max(1, world_size)))
         return DataLoader(
             dataset,
-            batch_size=batch_size,
-            shuffle=shuffle,
+            batch_sampler=sampler,
             pin_memory=torch.cuda.is_available(),
-            num_workers=cpu_workers,
-            prefetch_factor=2 if cpu_workers > 0 else None,
-            persistent_workers=True if cpu_workers > 0 else False,
+            num_workers=workers,
+            prefetch_factor=2,
+            persistent_workers=True,
             collate_fn=PadCollator(dataset.pad_src, dataset.pad_tgt),
         )
-    

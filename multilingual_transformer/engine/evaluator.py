@@ -4,29 +4,13 @@ import unicodedata
 from typing import TYPE_CHECKING
 
 from sacrebleu.metrics import BLEU, CHRF
+from multilingual_transformer.utils.distributed import gather_all
 
-if TYPE_CHECKING:  # avoids importing torch just to score text
+if TYPE_CHECKING:
     from multilingual_transformer.engine.decoder import TranslationGenerator
 
 
 class TranslationEvaluator:
-    """Corpus-level BLEU and chrF via sacreBLEU, the de-facto reference implementation.
-
-    Metric choices (all reported in `self.signatures` after each `evaluate` call, so scores are reproducible):
-      * BLEU   - corpus-level, sacreBLEU default smoothing ("exp"), tokenize="intl". The default "13a"
-                 tokenizer only splits ASCII punctuation, so the Hindi danda "।" stays glued to the
-                 previous word ("है।" != "है ।"). "intl" splits Unicode punctuation/symbols and keeps
-                 Indic combining marks (matras, viramas) inside words.
-      * chrF   - corpus-level character n-grams (sacreBLEU default: char order 6, beta 2). Set
-                 `chrf_word_order=2` for chrF++ (adds word uni/bi-grams).
-      * lowercase=True - the model is trained on lowercased text, so scoring is case-insensitive.
-                 Pass lowercase=False for case-sensitive scoring.
-      * Unicode NFC applied to hypotheses and references only. This merges canonically-equivalent
-        encodings (e.g. a precomposed nukta letter vs base letter + nukta); no other rewriting is done.
-        Notably there is NO mapping of digit scripts, danda variants, etc.: a hypothesis that writes
-        "५०" where the reference has "50" is a genuine surface mismatch and is scored as one.
-    """
-
     def __init__(
         self,
         generator: TranslationGenerator,
@@ -53,19 +37,33 @@ class TranslationEvaluator:
         beam_size: int = 5,
         batch_size: int = 128,
         sample_size: int = 500,
+        rank: int = 0,
+        world_size: int = 1,
     ) -> tuple[float, float, list[dict[str, str]]]:
         n = min(sample_size, len(sources))
         src_subset, ref_subset = sources[:n], references[:n]
 
+        # Shard the evaluation dataset across ranks
+        shard_src = [src_subset[i] for i in range(rank, len(src_subset), world_size)]
+        shard_indices = list(range(rank, len(src_subset), world_size))
+
         if method == "beam":
-            preds = self.generator.batched_beam_decode(src_subset, beam_size=beam_size, batch_size=batch_size)
+            shard_preds = self.generator.batched_beam_decode(shard_src, beam_size=beam_size, batch_size=batch_size)
         else:
-            preds = self.generator.batched_greedy_decode(src_subset, batch_size=batch_size)
+            shard_preds = self.generator.batched_greedy_decode(shard_src, batch_size=batch_size)
+
+        # Interleave gathered predictions back into original order on all ranks
+        gathered_data = gather_all(list(zip(shard_indices, shard_preds)), world_size)
+        
+        all_preds_dict: dict[int, str] = {}
+        for rank_records in gathered_data:
+            for idx, p in rank_records:
+                all_preds_dict[idx] = p
+        preds = [all_preds_dict[i] for i in range(len(src_subset))]
 
         hyps = [self._prep(p) for p in preds]
         refs = [self._prep(r) for r in ref_subset]
 
-        # Fresh metric objects per call: sacreBLEU metrics keep per-evaluation state for the signature.
         bleu_metric = BLEU(tokenize=self.bleu_tokenize, lowercase=self.lowercase)
         chrf_metric = CHRF(word_order=self.chrf_word_order, lowercase=self.lowercase)
         bleu = bleu_metric.corpus_score(hyps, [refs]).score
