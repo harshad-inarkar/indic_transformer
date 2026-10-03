@@ -40,9 +40,9 @@ sa = "acomquest/Saamayik"
 [multilingual]
 train_languages_pairs = ["en-hi", "en-mr", "en-sa"]
 target_tokens_format = "<2{}>"
-pairs_per_lang = 50000
-val_size_per_lang = 2500
-test_size_per_lang = 2500
+pairs_per_lang = 10000
+val_size_per_lang = 1000
+test_size_per_lang = 1000
 
 [data]
 data_dir = "processed_multi_data"
@@ -61,10 +61,10 @@ algo_tgt = "unigram"
 max_vocab_size = 24000
 
 [model]
-d_model = 512
+d_model = 256
 num_layers = 4
 num_heads = 4
-d_ff = 1024
+d_ff = 768
 dropout = 0.1
 
 [training]
