@@ -72,10 +72,20 @@ class MultilingualDataPipeline:
                     if len(cur_en) >= total_needed:
                         break
 
-            tr_e, tr_t = cur_en[:pairs_per_lang], cur_tgt[:pairs_per_lang]
-            va_e, va_t = cur_en[pairs_per_lang:pairs_per_lang + val_per_lang], cur_tgt[pairs_per_lang:pairs_per_lang + val_per_lang]
-            te_e, te_t = cur_en[pairs_per_lang + val_per_lang:], cur_tgt[pairs_per_lang + val_per_lang:]
+            # Restore original proportional slicing logic
+            total_requested = pairs_per_lang + val_per_lang + test_per_lang
+            actual_total = len(cur_en)
+            
+            bounds, cum = [0], 0
+            for n in [pairs_per_lang, val_per_lang, test_per_lang]:
+                cum += n
+                bounds.append(int(actual_total * cum / total_requested))
+                
+            tr_e, tr_t = cur_en[bounds[0]:bounds[1]], cur_tgt[bounds[0]:bounds[1]]
+            va_e, va_t = cur_en[bounds[1]:bounds[2]], cur_tgt[bounds[1]:bounds[2]]
+            te_e, te_t = cur_en[bounds[2]:bounds[3]], cur_tgt[bounds[2]:bounds[3]]
 
+            
             # Bidirectional augmentation
             train_src.extend([f"<2{tgt_lang}> {s}" for s in tr_e])
             train_tgt.extend(tr_t)
