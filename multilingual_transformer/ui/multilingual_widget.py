@@ -38,8 +38,9 @@ class MultilingualTranslationWidget:
                     print("Source and Target languages must be different.")
                     return
                 
-                # Apply the target steering token dynamically
-                tgt_prefix = self.token_fmt.format(tgt_dropdown.value)
+                # If translating TO English, we use <2en>. Otherwise, use the target tag.
+                target_code = tgt_dropdown.value.lower()
+                tgt_prefix = self.token_fmt.format(target_code)
                 prefixed_text = f"{tgt_prefix} {text_box.value}"
                 
                 if method_dropdown.value == "greedy":

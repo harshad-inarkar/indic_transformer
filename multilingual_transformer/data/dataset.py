@@ -205,7 +205,7 @@ class DataPipeline:
         sampler = BucketBatchSampler(
             lengths, batch_size, shuffle=shuffle, seed=seed, rank=rank, world_size=world_size
         )
-        workers = max(1, min(4, (os.cpu_count() or 2) // max(1, world_size)))
+        
         return DataLoader(
             dataset,
             batch_sampler=sampler,

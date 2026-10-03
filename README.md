@@ -6,10 +6,10 @@ This pipeline supports both **One-to-One** translation (training a dedicated mod
 
 ## Key Architectural Upgrades
 
-- **Multi-GPU DistributedDataParallel (DDP):** Auto-detects available GPUs and distributes training batches via `torch.multiprocessing.spawn`. Parallelized vector beam search evaluation aggregates predictions across all GPUs via NCCL `all_gather_object`.
-- **Length-Bucketed Sampler:** Sentences of similar lengths are bucketed into batches before padding, minimizing sequence padding overhead to under 10% and accelerating training times by 2-3×.
-- **SwiGLU Activation:** Upgraded the feed-forward networks from standard ReLU to SwiGLU (Swish-Gated Linear Unit). Using a `3x` dimension ratio (e.g., $d_{model}=256, d_{ff}=768$), it requires half the total parameters of a standard `4x` ReLU setup while outperforming it across BLEU and chrF metrics.
-- **Bidirectional Prefix Augmentation:** For the multilingual flow, the pipeline automatically flips English-Indic pairs to Indic-English and injects target-language tags (e.g., `<2hi>`, `<2en>`), training the model on bidirectional translation in a single pass.
+- **Multi-GPU DistributedDataParallel (DDP):** Auto-detects GPUs and distributes batches via `mp.spawn`.
+- **Length-Bucketed Sampler:** Sentences of similar lengths are bucketed, minimizing padding overhead to under 10%.
+- **SwiGLU Activation:** Upgraded feed-forward networks to SwiGLU. Using a `3x` dimension ratio (e.g., $d_{model}=256, d_{ff}=768$) maintains a parameter count equivalent to a standard 2-matrix `3x` ReLU setup, while utilizing dynamic gating for better capacity.
+- **Bidirectional Prefix Augmentation:** Automatically trains the model on bidirectional translation (e.g., `<2hi>`, `<2en>`) in a single pass.
 
 ## Supported Languages and Datasets
 
@@ -69,7 +69,7 @@ python -m multilingual_transformer.scripts.multilingual_interactive
 
 You can run interactive translation testing directly inside a notebook. The widget dynamically populates based on the configuration file used during training.
 
-```python
+```bash
 # For One-to-One Models
 from multilingual_transformer.ui.widget import launch
 launch()
@@ -79,6 +79,44 @@ from multilingual_transformer.ui.multilingual_widget import launch
 launch()
 
 ```
+## Google Colab Setup:
+1. Enable a GPU runtime: *Runtime → Change runtime type → T4 GPU*.
+2. Clone and install:
+
+```bash
+# Cell 1: Setup, Install, and Create Working Directory
+base_dir = '/content'
+repo_dir = 'multilingual_transformer'
+work_dir = f"{base_dir}/{repo_dir}/work_dir"
+
+%cd {base_dir}
+
+!rm -rf multilingual_transformer
+!git clone https://github.com/harshad-inarkar/multilingual_transformer.git
+%cd multilingual_transformer
+!pip install -q -e .
+!mkdir -p {work_dir}
+```
+
+3. Train and Interactive Script
+
+```bash
+# For One-to-One Models
+%cd {work_dir}
+!python -m multilingual_transformer.scripts.train
+
+%cd {work_dir}
+!python -m multilingual_transformer.scripts.interactive
+
+# For Universal Multilingual Models
+%cd {work_dir}
+!python -m multilingual_transformer.scripts.multilingual_train
+
+%cd {work_dir}
+!python -m multilingual_transformer.scripts.multilingual_interactive
+
+```
+
 
 ## Configuration
 
@@ -128,23 +166,13 @@ batch_size = 256
 
 ```
 multilingual_transformer/
-├── configs/
-│   ├── config.py                  # Dataclasses + TOML loading
-│   ├── transformer_config.toml    # One-to-One settings
-│   ├── multilingual_config.toml   # Multi-language settings
-│  
-├── data/
-│   ├── dataset.py                 # Core text processing, dataset caching
-│   ├── multilingual_dataset.py    # Bidirectional prefix logic
-│   ├── sampler.py                 # Length-bucketing DDP sampler
-│   ├── tokenizer.py               # Tokenizer wrappers
-│   └── multilingual_tokenizer.py  # Shared vocabulary generator
-│
-├── models/      attention.py, layers.py (SwiGLU FFN), transformer.py
-├── engine/      trainer.py (DDP Engine), decoder.py, evaluator.py, loader.py
-├── scripts/     train.py, multilingual_train.py, interactive.py
+├── configs/     config.py, transformer_config.toml, multilingual_config.toml
+├── data/        dataset.py, multilingual_dataset.py, sampler.py, tokenizer.py, multilingual_tokenizer.py
+├── models/      attention.py, layers.py, transformer.py
+├── engine/      trainer.py, decoder.py, evaluator.py, loader.py
+├── scripts/     train.py, multilingual_train.py, interactive.py, multilingual_interactive.py, evaluate.py
 ├── ui/          widget.py, multilingual_widget.py
-└── utils/       helpers.py, distributed.py (NCCL & mp.spawn hooks)
+└── utils/       helpers.py, distributed.py
 
 ```
 

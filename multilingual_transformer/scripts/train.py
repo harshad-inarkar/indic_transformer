@@ -106,6 +106,16 @@ def train_worker(rank: int, world_size: int, config_path: str) -> None:
     
     barrier()   # rank 0 has finished writing checkpoints before anyone restores
 
+    if is_main:
+        print("\n" + "=" * 70)
+        print("                    SAVED CHECKPOINTS")
+        print("=" * 70)
+        for label, info in (("Best (lowest val)", trainer.best_info), ("Final (last epoch)", trainer.last_info)):
+            if info:
+                print(f"{label:<19}: epoch {info['epoch']}/{cfg.training.epochs} | "
+                      f"Train {info['train_loss']:.4f} | Val {info['val_loss']:.4f} | {info['path']}")
+        print("=" * 70)
+
     trainer.restore()
     trainer.release()
     del trainer, tr_loader, val_loader, tr_ds, val_ds
@@ -134,6 +144,33 @@ def train_worker(rank: int, world_size: int, config_path: str) -> None:
             bleu_greedy, chrf_greedy, bleu_beam, chrf_beam,
             tok_src.get_vocab_size(), tok_tgt.get_vocab_size(),
         )
+
+        print(f"\nBLEU signature: {evaluator.signatures.get('bleu')}")
+        print(f"chrF signature: {evaluator.signatures.get('chrf')}")
+
+        print("="*55)
+
+        if cfg.inference.sample_source == "test":
+            k = min(cfg.inference.num_samples, len(te_src))
+            idx = random.Random(cfg.project.seed).sample(range(len(te_src)), k)
+            sentences = [te_src[i] for i in idx]
+            refs = [te_tgt[i] for i in idx]
+            title = "Test"
+        else:
+            sentences = cfg.inference.sample_sentences
+            refs = None
+            title = "Config"
+
+        if sentences:
+            print(f"\n=== {title} Sample Translations ({cfg.language.lang_pair}) ===")
+            greedy_preds = generator.batched_greedy_decode(sentences)
+            beam_preds = generator.batched_beam_decode(sentences, beam_size=5)
+            for i, (sent, g_pred, b_pred) in enumerate(zip(sentences, greedy_preds, beam_preds), 1):
+                print(f"[{i}] EN   : {sent}")
+                if refs is not None:
+                    print(f"    Ref    : {refs[i - 1]}")
+                print(f"    Greedy : {g_pred}")
+                print(f"    Beam   : {b_pred}\n")
 
 
 def _launch_train(rank: int, world_size: int) -> None:

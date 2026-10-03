@@ -9,14 +9,16 @@ import torch.multiprocessing as mp
 from datetime import timedelta
 
 
-
 def init_distributed_process(rank: int, world_size: int, backend: str = "nccl") -> None:
     """Initialize process group on rank's dedicated GPU."""
-    torch.cuda.set_device(rank)
+    local_rank = rank % torch.cuda.device_count()
+    torch.cuda.set_device(local_rank)
+    
     if "MASTER_ADDR" not in os.environ:
         os.environ["MASTER_ADDR"] = "127.0.0.1"
     if "MASTER_PORT" not in os.environ:
-        os.environ["MASTER_PORT"] = "29500"
+        # Use a dynamic default port to prevent collision on single machines
+        os.environ["MASTER_PORT"] = str(29500 + int(os.environ.get("WORKER_PORT_OFFSET", 0)))
 
     dist.init_process_group(backend=backend, rank=rank, world_size=world_size, timeout=timedelta(hours=1))
 

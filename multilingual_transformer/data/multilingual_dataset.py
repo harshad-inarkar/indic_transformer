@@ -39,11 +39,18 @@ class MultilingualDataPipeline:
             return str(rec.get("en", "")).strip(), str(rec.get("sa", "")).strip()
         return str(row["src"]).strip(), str(row["tgt"]).strip()
 
-    def acquire_multilingual_corpus(
-        self, pairs_per_lang: int, val_per_lang: int, test_per_lang: int
+   def acquire_multilingual_corpus(
+        self, pairs_per_lang: int, val_per_lang: int, test_per_lang: int, force_download: bool = False
     ) -> dict[str, Any]:
-        """Loads English-Indic pairs and duplicates them bidirectionally with <2tgt> tags."""
+        import pickle
+        cache_path = self.data_dir / "multilingual_corpus_cache.pkl"
+        
+        if not force_download and cache_path.exists():
+            with open(cache_path, "rb") as f:
+                return pickle.load(f)
+
         self.data_dir.mkdir(parents=True, exist_ok=True)
+
         train_src, train_tgt = [], []
         eval_splits: dict[str, dict[str, list[str]]] = {}
 
@@ -108,14 +115,21 @@ class MultilingualDataPipeline:
         for pair_data in eval_splits.values():
             combined_val_src.extend(pair_data["val_src"])
             combined_val_tgt.extend(pair_data["val_tgt"])
+        
 
-        return {
+        out_dict = {
             "train_src": train_src,
             "train_tgt": train_tgt,
             "val_src": combined_val_src,
             "val_tgt": combined_val_tgt,
             "eval_splits": eval_splits,
         }
+        
+        with open(cache_path, "wb") as f:
+            pickle.dump(out_dict, f)
+            
+        return out_dict
+
 
     @staticmethod
     def create_loader(
@@ -130,7 +144,7 @@ class MultilingualDataPipeline:
         sampler = BucketBatchSampler(
             lengths, batch_size, shuffle=shuffle, seed=seed, rank=rank, world_size=world_size
         )
-        workers = max(1, min(4, (os.cpu_count() or 2) // max(1, world_size)))
+        
         return DataLoader(
             dataset,
             batch_sampler=sampler,

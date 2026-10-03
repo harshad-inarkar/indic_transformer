@@ -76,8 +76,9 @@ def multilingual_worker(rank: int, world_size: int, config_path: str) -> None:
         print("=" * 50)
         print(f"Base Pairs   : {train_pairs}")
         print(f"Gen. Tokens  : {target_tokens}")
-        print(f"Shared Vocab : {cfg.tokenizer.max_vocab_size}")
+        print(f"Tokenizers   : Shared {cfg.tokenizer.algo_tgt.upper()} (Vocab: {cfg.tokenizer.max_vocab_size})")
         print(f"Epochs       : {cfg.training.epochs}")
+        print(f"Save Best    : {cfg.training.save_best}")
         print(f"GPUs Active  : {world_size}")
         print("=" * 50 + "\n")
 
@@ -167,6 +168,15 @@ def multilingual_worker(rank: int, world_size: int, config_path: str) -> None:
             results[pair_key] = (bleu, chrf)
 
     if is_main:
+        print("\n" + "=" * 70)
+        print("                    SAVED CHECKPOINTS")
+        print("=" * 70)
+        for label, info in (("Best (lowest val)", trainer.best_info), ("Final (last epoch)", trainer.last_info)):
+            if info:
+                print(f"{label:<19}: epoch {info['epoch']}/{cfg.training.epochs} | "
+                      f"Train {info['train_loss']:.4f} | Val {info['val_loss']:.4f} | {info['path']}")
+        print("=" * 70)
+
         print_multilingual_stats_table(
             cfg, n_params, len(tr_loader), train_time, peak_mem, peak_res, vocab_sz, results
         )
