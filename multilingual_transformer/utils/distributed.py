@@ -20,7 +20,13 @@ def init_distributed_process(rank: int, world_size: int, backend: str = "nccl") 
         # Use a dynamic default port to prevent collision on single machines
         os.environ["MASTER_PORT"] = str(29500 + int(os.environ.get("WORKER_PORT_OFFSET", 0)))
 
-    dist.init_process_group(backend=backend, rank=rank, world_size=world_size, timeout=timedelta(hours=1))
+    dist.init_process_group(
+        backend=backend, 
+        rank=rank, 
+        world_size=world_size, 
+        timeout=timedelta(hours=1),
+        device_id=torch.device(f"cuda:{local_rank}"),
+        )
 
 
 def run_auto_distributed(target_fn: Callable[[int, int], None]) -> None:
