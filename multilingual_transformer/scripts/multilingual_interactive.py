@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 from pathlib import Path
 import tomllib
@@ -10,7 +12,7 @@ from multilingual_transformer.data.tokenizer import TokenizerManager
 from multilingual_transformer.engine.decoder import TranslationGenerator
 from multilingual_transformer.models.transformer import MultilingualTransformer
 
-def main():
+def main() -> None:
     script_dir = Path(__file__).resolve().parent
     config_path = script_dir.parent / "configs" / "multilingual_config.toml"
     
@@ -20,6 +22,14 @@ def main():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         cfg = AppConfig.from_toml(config_path)
+
+    # Calculate active languages dynamically from the configuration
+    train_pairs = raw_cfg["multilingual"]["train_languages_pairs"]
+    token_fmt = raw_cfg["multilingual"]["target_tokens_format"]
+    valid_langs = set()
+    for pair in train_pairs:
+        valid_langs.update(pair.split("-"))
+    valid_langs = sorted(list(valid_langs))
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tok_path = cfg.data.tokenizer_dir / f"multilingual_shared_{cfg.tokenizer.max_vocab_size}.json"
@@ -48,22 +58,24 @@ def main():
 
     print("\n" + "=" * 60)
     print("Universal Translation Matrix (Zero-Shot Enabled)")
-    print("Supported Target Codes: en, hi, mr, sa")
+    print(f"Supported Target Codes: {', '.join(valid_langs)}")
     print("Type 'q' to quit.")
     print("=" * 60 + "\n")
 
     while True:
         try:
-            tgt_lang = input("\nEnter Target Language code (e.g., mr) [or 'q']: ").strip().lower()
-            if tgt_lang in ["q", "exit"]: break
-            if f"<2{tgt_lang}>" not in raw_cfg["multilingual"]["target_tokens"]:
-                print("Unsupported language code.")
+            tgt_lang = input(f"\nEnter Target Language code ({', '.join(valid_langs)}) [or 'q']: ").strip().lower()
+            if tgt_lang in ["q", "exit"]: 
+                break
+            if tgt_lang not in valid_langs:
+                print(f"Unsupported language code. Choose from: {valid_langs}")
                 continue
 
             text = input("Enter sentence to translate: ").strip()
-            if not text: continue
+            if not text: 
+                continue
 
-            prefixed_text = f"<2{tgt_lang}> {text}"
+            prefixed_text = f"{token_fmt.format(tgt_lang)} {text}"
             beam_out = generator.batched_beam_decode([prefixed_text], beam_size=5)[0]
             print(f"[{tgt_lang.upper()} Beam]: {beam_out}")
             
