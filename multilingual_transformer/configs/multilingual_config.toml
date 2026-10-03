@@ -64,7 +64,7 @@ max_vocab_size = 24000
 d_model = 512
 num_layers = 4
 num_heads = 4
-d_ff = 1024
+d_ff = 1536
 dropout = 0.1
 
 [training]
