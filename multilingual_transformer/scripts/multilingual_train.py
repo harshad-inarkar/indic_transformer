@@ -164,11 +164,14 @@ def multilingual_worker(rank: int, world_size: int, config_path: str) -> None:
         )
 
 
-def main() -> None:
+def _launch_multilingual(rank: int, world_size: int) -> None:
+    """Top-level wrapper so multiprocessing can pickle the function."""
     script_dir = Path(__file__).resolve().parent
     config_path = script_dir.parent / "configs" / "multilingual_config.toml"
-    run_auto_distributed(lambda r, w: multilingual_worker(r, w, str(config_path)))
+    multilingual_worker(rank, world_size, str(config_path))
 
+def main() -> None:
+    run_auto_distributed(_launch_multilingual)
 
 if __name__ == "__main__":
     main()

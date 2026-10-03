@@ -134,15 +134,22 @@ def train_worker(rank: int, world_size: int, config_path: str) -> None:
         )
 
 
-def main() -> None:
+def _launch_train(rank: int, world_size: int) -> None:
+    """Top-level wrapper so multiprocessing can pickle the function."""
+    import argparse
+    from pathlib import Path
+    
     script_dir = Path(__file__).resolve().parent
     default_config = script_dir.parent / "configs" / "transformer_config.toml"
+    
     parser = argparse.ArgumentParser(description="Transformer Engine")
     parser.add_argument("--config", type=str, default=str(default_config))
     args = parser.parse_args()
+    
+    train_worker(rank, world_size, args.config)
 
-    run_auto_distributed(lambda r, w: train_worker(r, w, args.config))
-
+def main() -> None:
+    run_auto_distributed(_launch_train)
 
 if __name__ == "__main__":
     main()
