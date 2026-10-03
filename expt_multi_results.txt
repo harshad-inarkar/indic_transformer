@@ -1,0 +1,269 @@
+
+
+
+/content/multilingual_transformer/work_dir
+
+==================================================
+      INITIALIZING MULTILINGUAL PIPELINE
+==================================================
+Base Pairs   : ['en-hi', 'en-mr', 'en-sa']
+Gen. Tokens  : ['<2en>', '<2hi>', '<2mr>', '<2sa>']
+Shared Vocab : 24000
+Epochs       : 10
+GPUs Active  : 2
+==================================================
+
+Loading HI pairs from ai4bharat/samanantar...
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Extracting HI: 100%|███████████████████| 60000/60000 [00:04<00:00, 13458.47it/s]
+Loading MR pairs from ai4bharat/samanantar...
+Extracting MR: 100%|███████████████████| 60000/60000 [00:04<00:00, 13218.43it/s]
+Loading SA pairs from acomquest/Saamayik...
+Extracting SA:  67%|████████████▋      | 40190/60000 [00:03<00:01, 12741.07it/s]
+Training shared multilingual tokenizer...
+[00:00:00] Suffix array seeds             ██████████████████ 249732   /   249732[00:00:00] Suffix array seeds             ██████████████████ 0        /        0
+[00:00:40] EM training                    ██████████████████ 20       /       20
+/usr/local/lib/python3.13/dist-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+[rank0]:[W1003 17:04:16.132893597 ProcessGroupNCCL.cpp:5188] Guessing device ID based on global rank. This can cause a hang if rank to GPU mapping is heterogeneous. You can specify device_id in init_process_group()
+Epoch  1/10 | Time: 1m 08s | Train Loss: 7.3068 | Val Loss: 5.4928              
+Epoch  2/10 | Time: 1m 08s | Train Loss: 5.4553 | Val Loss: 4.6351              
+Epoch  3/10 | Time: 1m 08s | Train Loss: 4.8708 | Val Loss: 4.2168              
+Epoch  4/10 | Time: 1m 08s | Train Loss: 4.5323 | Val Loss: 4.0106              
+Epoch  5/10 | Time: 1m 08s | Train Loss: 4.3045 | Val Loss: 3.8830              
+Epoch  6/10 | Time: 1m 08s | Train Loss: 4.1350 | Val Loss: 3.8028              
+Epoch  7/10 | Time: 1m 08s | Train Loss: 4.0075 | Val Loss: 3.7611              
+Epoch  8/10 | Time: 1m 08s | Train Loss: 3.9142 | Val Loss: 3.7421              
+Epoch  9/10 | Time: 1m 08s | Train Loss: 3.8584 | Val Loss: 3.7346              
+Epoch 10/10 | Time: 1m 07s | Train Loss: 3.8307 | Val Loss: 3.7339              
+                                                                                
+======================================================================
+              CONSOLIDATED MULTILINGUAL STATISTICS
+======================================================================
+Dataset Strategy  : Bidirectional Augmentation with Target Prefixes
+Tokenizers Used   : Shared Vocabulary (UNIGRAM)
+Shared Vocab Size : 24,000
+Model Parameters  : 26,320,896 (100.4 MB fp32)
+Transformer Arch  : d_model 256 / num_layers 4/ d_ff 768
+----------------------------------------------------------------------
+Epochs            : 10
+BlEU Samples      : 1000 (per pair)
+Steps per Epoch   : 522
+Total Train Time  : 11.51 minutes
+Peak GPU Memory   : 15.33 GB Reserved / 10.51 GB Allocated
+----------------------------------------------------------------------
+Final Target Benchmarks (Beam Decoding):
+  EN-HI   -> BLEU:  5.39 | CHRF: 24.32
+  HI-EN   -> BLEU:  6.88 | CHRF: 27.53
+  EN-MR   -> BLEU:  5.42 | CHRF: 26.24
+  MR-EN   -> BLEU:  9.32 | CHRF: 29.98
+  EN-SA   -> BLEU:  7.65 | CHRF: 25.06
+  SA-EN   -> BLEU: 15.10 | CHRF: 32.43
+======================================================================
+
+---
+
+🚀 Utilizing 2 GPUs for training!
+Epoch  1/2 | Time: 1m 13s | Train Loss: 7.2884 | Val Loss: 5.8780               
+Epoch  2/2 | Time: 1m 08s | Train Loss: 6.2975 | Val Loss: 5.6753               
+
+Starting evaluation across all pairs and reversed directions...
+                                                                                
+======================================================================
+              CONSOLIDATED MULTILINGUAL STATISTICS
+======================================================================
+Dataset Strategy  : Bidirectional Augmentation with Target Prefixes
+Tokenizers Used   : Shared Vocabulary (UNIGRAM)
+Shared Vocab Size : 24,000
+Model Parameters  : 23,691,264 (90.4 MB fp32)
+d_model/layers    : 256 / 4
+----------------------------------------------------------------------
+Epochs            : 2
+BlEU Samples      : 1000 (per pair)
+Steps per Epoch   : 235
+Total Train Time  : 2.39 minutes
+Peak GPU Memory   : 12.93 GB Reserved / 8.35 GB Allocated
+----------------------------------------------------------------------
+Final Target Benchmarks (Beam Decoding):
+  EN-HI   -> BLEU:  0.21 | CHRF:  5.12
+  HI-EN   -> BLEU:  0.67 | CHRF: 10.70
+  EN-MR   -> BLEU:  0.16 | CHRF:  2.88
+  MR-EN   -> BLEU:  0.64 | CHRF:  9.86
+  EN-SA   -> BLEU:  1.02 | CHRF:  2.41
+  SA-EN   -> BLEU:  4.25 | CHRF: 13.18
+======================================================================
+
+-----
+
+==================================================
+      INITIALIZING MULTILINGUAL PIPELINE
+==================================================
+Base Pairs   : ['en-hi', 'en-mr', 'en-sa']
+Gen. Tokens  : ['<2en>', '<2hi>', '<2mr>', '<2sa>']
+Vocab Size   : 24000 (Shared)
+Epochs       : 2
+Pairs/Lang   : 50000 (doubled by reversing)
+Save Best    : True
+==================================================
+
+Loading HI pairs from ai4bharat/samanantar...
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Extracting HI: 100%|███████████████████| 52000/52000 [00:03<00:00, 13807.39it/s]
+Loading SA pairs from acomquest/Saamayik...
+Extracting SA:  77%|██████████████▋    | 40190/52000 [00:03<00:00, 13175.54it/s]
+Loading MR pairs from ai4bharat/samanantar...
+Extracting MR: 100%|███████████████████| 52000/52000 [00:03<00:00, 14420.95it/s]
+Training shared multilingual tokenizer...
+[00:00:00] Suffix array seeds             ██████████████████ 257434   /   257434[00:00:00] Suffix array seeds             ██████████████████ 0        /        0
+[00:00:40] EM training                    ██████████████████ 20       /       20
+🚀 Utilizing 2 GPUs for training!
+Epoch  1/2 | Time: 5m 07s | Train Loss: 6.4682 | Val Loss: 4.8970               
+Epoch  2/2 | Time: 5m 05s | Train Loss: 5.4611 | Val Loss: 4.6435               
+
+/content/multilingual_transformer/work_dir
+
+==================================================
+      INITIALIZING MULTILINGUAL PIPELINE
+==================================================
+Base Pairs   : ['en-hi', 'en-mr', 'en-sa']
+Gen. Tokens  : ['<2en>', '<2hi>', '<2mr>', '<2sa>']
+Shared Vocab : 24000
+Epochs       : 10
+GPUs Active  : 2
+==================================================
+
+Loading HI pairs from ai4bharat/samanantar...
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Extracting HI: 100%|███████████████████| 60000/60000 [00:04<00:00, 13458.47it/s]
+Loading MR pairs from ai4bharat/samanantar...
+Extracting MR: 100%|███████████████████| 60000/60000 [00:04<00:00, 13218.43it/s]
+Loading SA pairs from acomquest/Saamayik...
+Extracting SA:  67%|████████████▋      | 40190/60000 [00:03<00:01, 12741.07it/s]
+Training shared multilingual tokenizer...
+[00:00:00] Suffix array seeds             ██████████████████ 249732   /   249732[00:00:00] Suffix array seeds             ██████████████████ 0        /        0
+[00:00:40] EM training                    ██████████████████ 20       /       20
+/usr/local/lib/python3.13/dist-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+[rank0]:[W1003 17:04:16.132893597 ProcessGroupNCCL.cpp:5188] Guessing device ID based on global rank. This can cause a hang if rank to GPU mapping is heterogeneous. You can specify device_id in init_process_group()
+Epoch  1/10 | Time: 1m 08s | Train Loss: 7.3068 | Val Loss: 5.4928              
+Epoch  2/10 | Time: 1m 08s | Train Loss: 5.4553 | Val Loss: 4.6351              
+Epoch  3/10 | Time: 1m 08s | Train Loss: 4.8708 | Val Loss: 4.2168              
+Epoch  4/10 | Time: 1m 08s | Train Loss: 4.5323 | Val Loss: 4.0106              
+Epoch  5/10 | Time: 1m 08s | Train Loss: 4.3045 | Val Loss: 3.8830              
+Epoch  6/10 | Time: 1m 08s | Train Loss: 4.1350 | Val Loss: 3.8028              
+Epoch  7/10 | Time: 1m 08s | Train Loss: 4.0075 | Val Loss: 3.7611              
+Epoch  8/10 | Time: 1m 08s | Train Loss: 3.9142 | Val Loss: 3.7421              
+Epoch  9/10 | Time: 1m 08s | Train Loss: 3.8584 | Val Loss: 3.7346              
+Epoch 10/10 | Time: 1m 07s | Train Loss: 3.8307 | Val Loss: 3.7339              
+                                                                                
+======================================================================
+              CONSOLIDATED MULTILINGUAL STATISTICS
+======================================================================
+Dataset Strategy  : Bidirectional Augmentation with Target Prefixes
+Tokenizers Used   : Shared Vocabulary (UNIGRAM)
+Shared Vocab Size : 24,000
+Model Parameters  : 26,320,896 (100.4 MB fp32)
+Transformer Arch  : d_model 256 / num_layers 4/ d_ff 768
+----------------------------------------------------------------------
+Epochs            : 10
+BlEU Samples      : 1000 (per pair)
+Steps per Epoch   : 522
+Total Train Time  : 11.51 minutes
+Peak GPU Memory   : 15.33 GB Reserved / 10.51 GB Allocated
+----------------------------------------------------------------------
+Final Target Benchmarks (Beam Decoding):
+  EN-HI   -> BLEU:  5.39 | CHRF: 24.32
+  HI-EN   -> BLEU:  6.88 | CHRF: 27.53
+  EN-MR   -> BLEU:  5.42 | CHRF: 26.24
+  MR-EN   -> BLEU:  9.32 | CHRF: 29.98
+  EN-SA   -> BLEU:  7.65 | CHRF: 25.06
+  SA-EN   -> BLEU: 15.10 | CHRF: 32.43
+======================================================================
+
+
+Starting evaluation across all pairs and reversed directions...
+                                                                                
+======================================================================
+              CONSOLIDATED MULTILINGUAL STATISTICS
+======================================================================
+Dataset Strategy  : Bidirectional Augmentation with Target Prefixes
+Tokenizers Used   : Shared Vocabulary (UNIGRAM)
+Shared Vocab Size : 24,000
+Model Parameters  : 23,691,264 (90.4 MB fp32)
+d_model/layers    : 256 / 4
+----------------------------------------------------------------------
+Epochs            : 2
+BlEU Samples      : 1000 (per pair)
+Steps per Epoch   : 1,084
+Total Train Time  : 10.24 minutes
+Peak GPU Memory   : 13.03 GB Reserved / 8.35 GB Allocated
+----------------------------------------------------------------------
+Final Target Benchmarks (Beam Decoding):
+  EN-HI   -> BLEU:  2.01 | CHRF: 14.31
+  HI-EN   -> BLEU:  2.61 | CHRF: 17.14
+  EN-MR   -> BLEU:  1.55 | CHRF: 12.94
+  MR-EN   -> BLEU:  2.59 | CHRF: 17.23
+  EN-SA   -> BLEU:  3.04 | CHRF: 10.66
+  SA-EN   -> BLEU:  7.11 | CHRF: 18.44
+======================================================================
+
+----
+
+
+==================================================
+      INITIALIZING MULTILINGUAL PIPELINE
+==================================================
+Base Pairs   : ['en-hi', 'en-mr', 'en-sa']
+Gen. Tokens  : ['<2en>', '<2hi>', '<2mr>', '<2sa>']
+Vocab Size   : 24000 (Shared)
+Epochs       : 10
+Pairs/Lang   : 10000 (doubled by reversing)
+Save Best    : True
+==================================================
+
+Loading MR pairs from ai4bharat/samanantar...
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Extracting MR: 100% 12000/12000 [00:00<00:00, 13255.34it/s]
+Loading HI pairs from ai4bharat/samanantar...
+Extracting HI: 100% 12000/12000 [00:01<00:00, 11874.51it/s]
+Loading SA pairs from acomquest/Saamayik...
+Extracting SA: 100% 12000/12000 [00:00<00:00, 13780.02it/s]
+Training shared multilingual tokenizer...
+[00:00:00] Suffix array seeds             ██████████████████ 101420   /   101420
+[00:00:18] EM training                    ██████████████████ 14       /       14
+Epoch  1/10 | Time: 1m 00s | Train Loss: 7.9367 | Val Loss: 6.0917
+Epoch  2/10 | Time: 1m 02s | Train Loss: 6.2738 | Val Loss: 5.3780
+Epoch  3/10 | Time: 1m 02s | Train Loss: 5.7815 | Val Loss: 5.0204
+Epoch  4/10 | Time: 1m 02s | Train Loss: 5.4562 | Val Loss: 4.8132
+Epoch  5/10 | Time: 1m 02s | Train Loss: 5.2043 | Val Loss: 4.6677
+Epoch  6/10 | Time: 1m 02s | Train Loss: 4.9996 | Val Loss: 4.5927
+Epoch  7/10 | Time: 1m 02s | Train Loss: 4.8380 | Val Loss: 4.5445
+Epoch  8/10 | Time: 1m 02s | Train Loss: 4.7217 | Val Loss: 4.5247
+Epoch  9/10 | Time: 1m 02s | Train Loss: 4.6506 | Val Loss: 4.5176
+Epoch 10/10 | Time: 1m 02s | Train Loss: 4.6199 | Val Loss: 4.5179
+
+Starting evaluation across all pairs and reversed directions...
+
+======================================================================
+              CONSOLIDATED MULTILINGUAL STATISTICS
+======================================================================
+Dataset Strategy  : Bidirectional Augmentation with Target Prefixes
+Tokenizers Used   : Shared Vocabulary (UNIGRAM)
+Shared Vocab Size : 24,000
+Model Parameters  : 24,741,888 (94.4 MB fp32)
+d_model/layers    : 256 / 4
+----------------------------------------------------------------------
+Epochs            : 10
+BlEU Samples      : 1000 (per pair)
+Steps per Epoch   : 235
+Total Train Time  : 10.45 minutes
+Peak GPU Memory   : 14.77 GB Reserved / 9.48 GB Allocated
+----------------------------------------------------------------------
+Final Target Benchmarks (Beam Decoding):
+  EN-HI   -> BLEU:  2.39 | CHRF: 16.16
+  HI-EN   -> BLEU:  2.65 | CHRF: 18.92
+  EN-MR   -> BLEU:  2.12 | CHRF: 15.76
+  MR-EN   -> BLEU:  2.95 | CHRF: 18.57
+  EN-SA   -> BLEU:  4.69 | CHRF: 15.14
+  SA-EN   -> BLEU:  7.79 | CHRF: 21.15
+======================================================================
