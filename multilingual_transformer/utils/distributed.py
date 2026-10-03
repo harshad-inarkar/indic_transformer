@@ -6,6 +6,8 @@ from typing import Any, Callable
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
+from datetime import timedelta
+
 
 
 def init_distributed_process(rank: int, world_size: int, backend: str = "nccl") -> None:
@@ -15,7 +17,8 @@ def init_distributed_process(rank: int, world_size: int, backend: str = "nccl") 
         os.environ["MASTER_ADDR"] = "127.0.0.1"
     if "MASTER_PORT" not in os.environ:
         os.environ["MASTER_PORT"] = "29500"
-    dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
+
+    dist.init_process_group(backend=backend, rank=rank, world_size=world_size, timeout=timedelta(hours=1))
 
 
 def run_auto_distributed(target_fn: Callable[[int, int], None]) -> None:

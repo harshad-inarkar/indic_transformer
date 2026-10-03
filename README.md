@@ -30,7 +30,7 @@ Datasets are downloaded automatically from Hugging Face via Arrow backends, pre-
 ## Installation
 
 ```bash
-git clone [https://github.com/harshad-inarkar/multilingual_transformer.git](https://github.com/harshad-inarkar/multilingual_transformer.git)
+git clone https://github.com/harshad-inarkar/multilingual_transformer.git
 cd multilingual_transformer
 pip install -e .
 ```

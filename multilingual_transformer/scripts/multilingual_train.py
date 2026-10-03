@@ -138,6 +138,7 @@ def multilingual_worker(rank: int, world_size: int, config_path: str) -> None:
 
     trainer = Trainer(model, cfg, tr_loader, val_loader, shared_tok, shared_tok, rank=rank, world_size=world_size)
     train_time, peak_mem, peak_res = trainer.fit()
+    barrier()   # rank 0 has finished writing checkpoints before anyone restores
     trainer.restore()
     trainer.release()
     free_memory()
