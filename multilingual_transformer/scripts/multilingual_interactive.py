@@ -64,15 +64,14 @@ def main() -> None:
 
     while True:
         try:
-            # Single text box input format
-            raw_input = input(f"\nEnter [lang]: [text] (e.g. 'hi: hello') [or 'q' to quit]: ").strip()
+            # Fixed: Removed the leading '\n' that breaks Colab's input box rendering
+            raw_input = input(f"Enter [lang]: [text] (e.g. 'hi: hello') [or 'q' to quit]: ").strip()
             
             if not raw_input:
                 continue
             if raw_input.lower() in ["q", "exit"]: 
                 break
 
-            # Parse the combined input
             if ":" not in raw_input:
                 print("Invalid format. Please use 'lang: text' (e.g., 'mr: how are you?')")
                 continue
@@ -86,10 +85,9 @@ def main() -> None:
             if not text:
                 continue
 
-            # Steer the decoder
             prefixed_text = f"{token_fmt.format(tgt_lang)} {text}"
             beam_out = generator.batched_beam_decode([prefixed_text], beam_size=5)[0]
-            print(f"[{tgt_lang.upper()} Beam]: {beam_out}")
+            print(f"[{tgt_lang.upper()} Beam]: {beam_out}\n")
             
         except (KeyboardInterrupt, EOFError):
             print("\nExiting.")
