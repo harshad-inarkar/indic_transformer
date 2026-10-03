@@ -6,6 +6,15 @@ seed = 42
 English      = "en"
 Hindi        = "hi"
 Marathi      = "mr"
+Bengali      = "bn"
+Gujarati     = "gu"
+Kannada      = "kn"
+Malayalam    = "ml"
+Odia         = "or"
+Punjabi      = "pa"
+Tamil        = "ta"
+Telugu       = "te"
+Assamese     = "as"
 Sanskrit     = "sa"
 Multilingual = "multi"
 
@@ -14,11 +23,24 @@ src_lang = "Multilingual"
 target_lang = "Multilingual"
 dataset_name = "multilingual_blend"
 
+[dataset_map]
+hi = "ai4bharat/samanantar"
+mr = "ai4bharat/samanantar"
+bn = "ai4bharat/samanantar"
+gu = "ai4bharat/samanantar"
+kn = "ai4bharat/samanantar"
+ml = "ai4bharat/samanantar"
+or = "ai4bharat/samanantar"
+pa = "ai4bharat/samanantar"
+ta = "ai4bharat/samanantar"
+te = "ai4bharat/samanantar"
+as = "ai4bharat/samanantar"
+sa = "acomquest/Saamayik"
+
 [multilingual]
-# Custom settings for the new pipeline
-target_tokens = ["<2en>", "<2hi>", "<2mr>", "<2sa>"]
-dataset_map = { "hi" = "ai4bharat/samanantar", "mr" = "ai4bharat/samanantar", "sa" = "acomquest/Saamayik" }
-pairs_per_lang = 10000
+train_languages_pairs = ["en-hi", "en-mr", "en-sa"]
+target_tokens_format = "<2{}>"
+pairs_per_lang = 50000
 val_size_per_lang = 2500
 test_size_per_lang = 2500
 
@@ -26,9 +48,9 @@ test_size_per_lang = 2500
 data_dir = "processed_multi_data"
 checkpoint_dir = "checkpoints_multi"
 tokenizer_dir = "processed_multi_tokenizers"
-train_size = 10000  # Dummy values to satisfy AppConfig
-val_size = 2500
-test_size = 2500
+train_size = 300000  # Dummy value for AppConfig compatibility
+val_size = 15000
+test_size = 15000
 max_len = 96
 max_length_ratio = 5.0
 force_download = false
@@ -36,13 +58,13 @@ force_download = false
 [tokenizer]
 algo_src = "wordpiece"
 algo_tgt = "unigram"
-max_vocab_size = 24000  # Shared vocab size covering EN + Indic scripts
+max_vocab_size = 24000
 
 [model]
-d_model = 256
+d_model = 512
 num_layers = 4
 num_heads = 4
-d_ff = 768
+d_ff = 1024
 dropout = 0.1
 
 [training]
@@ -53,11 +75,11 @@ weight_decay = 0.01
 label_smoothing = 0.1
 torch_compile = false
 gen_batch_size = 256
-bleu_sample = 500
+bleu_sample = 1000
 save_best = true
 
 [inference]
 no_repeat_ngram_size = 3
-sample_source = "test"
+sample_source = "config"
 num_samples = 5
 sample_sentences = []

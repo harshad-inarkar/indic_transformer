@@ -17,6 +17,29 @@ from multilingual_transformer.models.transformer import MultilingualTransformer
 from multilingual_transformer.utils.helpers import free_memory, set_seed
 from multilingual_transformer.data.multilingual_tokenizer import MultilingualTokenizerManager
 
+def print_multilingual_stats_table(
+    cfg: AppConfig, n_params: int, train_loader_len: int, total_time: float,
+    peak_mem: float, peak_res: float, vocab_sz: int, results: dict[str, tuple[float, float]]
+) -> None:
+    print("\n" + "=" * 70)
+    print("              CONSOLIDATED MULTILINGUAL STATISTICS")
+    print("=" * 70)
+    print(f"Dataset Strategy  : Bidirectional Augmentation with Target Prefixes")
+    print(f"Tokenizers Used   : Shared Vocabulary ({cfg.tokenizer.algo_tgt.upper()})")
+    print(f"Shared Vocab Size : {vocab_sz:,}")
+    print(f"Model Parameters  : {n_params:,} ({n_params * 4 / 1024**2:.1f} MB fp32)")
+    print(f"d_model/layers    : {cfg.model.d_model} / {cfg.model.num_layers}")
+    print("-" * 70)
+    print(f"Epochs            : {cfg.training.epochs}")
+    print(f"BlEU Samples      : {cfg.training.bleu_sample} (per pair)")
+    print(f"Steps per Epoch   : {train_loader_len:,}")
+    print(f"Total Train Time  : {total_time / 60:.2f} minutes")
+    print(f"Peak GPU Memory   : {peak_res:.2f} GB Reserved / {peak_mem:.2f} GB Allocated")
+    print("-" * 70)
+    print("Final Target Benchmarks (Beam Decoding):")
+    for pair, (bleu, chrf) in results.items():
+        print(f"  {pair.upper():<7} -> BLEU: {bleu:5.2f} | CHRF: {chrf:5.2f}")
+    print("=" * 70 + "\n")
 
 def main() -> None:
     assert torch.cuda.is_available(), "CUDA device required."
@@ -27,7 +50,6 @@ def main() -> None:
     with open(config_path, "rb") as f:
         raw_cfg = tomllib.load(f)
         
-    # Use existing AppConfig to feed standard variables to the Trainer
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         cfg = AppConfig.from_toml(config_path)
@@ -36,8 +58,34 @@ def main() -> None:
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.benchmark = True
 
+    # 1. Dynamically generate target tokens from the requested train pairs
+    train_pairs = raw_cfg["multilingual"]["train_languages_pairs"]
+    token_fmt = raw_cfg["multilingual"]["target_tokens_format"]
+    
+    unique_langs = set()
+    for pair in train_pairs:
+        src_l, tgt_l = pair.split("-")
+        unique_langs.update([src_l, tgt_l])
+    
+    target_tokens = [token_fmt.format(lang) for lang in sorted(unique_langs)]
+
+    # 2. Filter the global dataset map to only include actively requested target languages
+    target_langs = {pair.split("-")[1] for pair in train_pairs}
+    active_dataset_map = {lang: raw_cfg["dataset_map"][lang] for lang in target_langs}
+
+    print("\n" + "=" * 50)
+    print("      INITIALIZING MULTILINGUAL PIPELINE")
+    print("=" * 50)
+    print(f"Base Pairs   : {train_pairs}")
+    print(f"Gen. Tokens  : {target_tokens}")
+    print(f"Vocab Size   : {cfg.tokenizer.max_vocab_size} (Shared)")
+    print(f"Epochs       : {cfg.training.epochs}")
+    print(f"Pairs/Lang   : {raw_cfg['multilingual']['pairs_per_lang']} (doubled by reversing)")
+    print(f"Save Best    : {cfg.training.save_best}")
+    print("=" * 50 + "\n")
+
     pipeline = MultilingualDataPipeline(
-        dataset_map=raw_cfg["multilingual"]["dataset_map"],
+        dataset_map=active_dataset_map,
         data_dir=cfg.data.data_dir,
         max_len=cfg.data.max_len,
         max_ratio=cfg.data.max_length_ratio,
@@ -51,20 +99,16 @@ def main() -> None:
     )
 
     print("Training shared multilingual tokenizer...")
-
     combined_texts = corpus["train_src"] + corpus["train_tgt"]
     shared_tok = MultilingualTokenizerManager.train(
         combined_texts, 
         cfg.tokenizer.algo_tgt, 
         cfg.tokenizer.max_vocab_size,
-        lang_tokens=raw_cfg["multilingual"]["target_tokens"]
+        lang_tokens=target_tokens
     )
     
-    # Define path and create directory before saving
     cfg.data.tokenizer_dir.mkdir(parents=True, exist_ok=True)
     shared_tok_path = cfg.data.tokenizer_dir / f"multilingual_shared_{cfg.tokenizer.max_vocab_size}.json"
-    
-    # Save uses the inherited method from the original TokenizerManager
     MultilingualTokenizerManager.save(shared_tok, shared_tok_path)
 
     tr_ds = TranslationDataset(corpus["train_src"], corpus["train_tgt"], shared_tok, shared_tok, cfg.data.max_len)
@@ -79,9 +123,10 @@ def main() -> None:
         d_model=cfg.model.d_model, num_layers=cfg.model.num_layers,
         num_heads=cfg.model.num_heads, d_ff=cfg.model.d_ff, dropout=cfg.model.dropout,
     )
+    n_params = sum(p.numel() for p in model.parameters())
 
     trainer = Trainer(model, cfg, tr_loader, val_loader, shared_tok, shared_tok)
-    trainer.fit()
+    train_time, peak_mem, peak_res = trainer.fit()
     trainer.restore()
     trainer.release()
     free_memory()
@@ -92,18 +137,25 @@ def main() -> None:
     )
     evaluator = TranslationEvaluator(generator)
 
-    print("\n" + "=" * 70)
-    print("      MULTILINGUAL EVALUATION BENCHMARKS (EN <-> HI / MR / SA)")
-    print("=" * 70)
-    for pair_key in ["en-hi", "hi-en", "en-mr", "en-sa"]:
+    results = {}
+    print("\nStarting evaluation across all pairs and reversed directions...")
+    eval_directions = []
+    for pair in train_pairs:
+        lang1, lang2 = pair.split("-")
+        eval_directions.extend([pair, f"{lang2}-{lang1}"])
+
+    for pair_key in eval_directions:
         split = corpus["eval_splits"].get(pair_key)
         if split:
             bleu, chrf, _ = evaluator.evaluate(
                 split["test_src"], split["test_tgt"], method="beam", beam_size=5,
                 batch_size=cfg.training.gen_batch_size, sample_size=cfg.training.bleu_sample,
             )
-            print(f"Direction {pair_key.upper():<7} -> Beam BLEU: {bleu:5.2f} | Beam CHRF: {chrf:5.2f}")
-    print("=" * 70)
+            results[pair_key] = (bleu, chrf)
+            
+    print_multilingual_stats_table(
+        cfg, n_params, len(tr_loader), train_time, peak_mem, peak_res, vocab_sz, results
+    )
 
 if __name__ == "__main__":
     main()
