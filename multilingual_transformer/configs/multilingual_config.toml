@@ -18,7 +18,7 @@ dataset_name = "multilingual_blend"
 # Custom settings for the new pipeline
 target_tokens = ["<2en>", "<2hi>", "<2mr>", "<2sa>"]
 dataset_map = { "hi" = "ai4bharat/samanantar", "mr" = "ai4bharat/samanantar", "sa" = "acomquest/Saamayik" }
-pairs_per_lang = 50000
+pairs_per_lang = 10000
 val_size_per_lang = 2500
 test_size_per_lang = 2500
 
@@ -26,9 +26,9 @@ test_size_per_lang = 2500
 data_dir = "processed_multi_data"
 checkpoint_dir = "checkpoints_multi"
 tokenizer_dir = "processed_multi_tokenizers"
-train_size = 300000  # Dummy values to satisfy AppConfig
-val_size = 15000
-test_size = 15000
+train_size = 10000  # Dummy values to satisfy AppConfig
+val_size = 2500
+test_size = 2500
 max_len = 96
 max_length_ratio = 5.0
 force_download = false
@@ -39,10 +39,10 @@ algo_tgt = "unigram"
 max_vocab_size = 24000  # Shared vocab size covering EN + Indic scripts
 
 [model]
-d_model = 512
-num_layers = 4
-num_heads = 4
-d_ff = 1024
+d_model = 256
+num_layers = 3
+num_heads = 3
+d_ff = 768
 dropout = 0.1
 
 [training]
@@ -53,11 +53,11 @@ weight_decay = 0.01
 label_smoothing = 0.1
 torch_compile = false
 gen_batch_size = 256
-bleu_sample = 1000
+bleu_sample = 500
 save_best = true
 
 [inference]
 no_repeat_ngram_size = 3
-sample_source = "config"
+sample_source = "test"
 num_samples = 5
 sample_sentences = []
