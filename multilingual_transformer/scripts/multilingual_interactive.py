@@ -64,17 +64,29 @@ def main() -> None:
 
     while True:
         try:
-            tgt_lang = input(f"\nEnter Target Language code ({', '.join(valid_langs)}) [or 'q']: ").strip().lower()
-            if tgt_lang in ["q", "exit"]: 
+            # Single text box input format
+            raw_input = input(f"\nEnter [lang]: [text] (e.g. 'hi: hello') [or 'q' to quit]: ").strip()
+            
+            if not raw_input:
+                continue
+            if raw_input.lower() in ["q", "exit"]: 
                 break
+
+            # Parse the combined input
+            if ":" not in raw_input:
+                print("Invalid format. Please use 'lang: text' (e.g., 'mr: how are you?')")
+                continue
+
+            tgt_lang, text = [part.strip() for part in raw_input.split(":", 1)]
+            tgt_lang = tgt_lang.lower()
+
             if tgt_lang not in valid_langs:
-                print(f"Unsupported language code. Choose from: {valid_langs}")
+                print(f"Unsupported language code '{tgt_lang}'. Choose from: {valid_langs}")
+                continue
+            if not text:
                 continue
 
-            text = input("Enter sentence to translate: ").strip()
-            if not text: 
-                continue
-
+            # Steer the decoder
             prefixed_text = f"{token_fmt.format(tgt_lang)} {text}"
             beam_out = generator.batched_beam_decode([prefixed_text], beam_size=5)[0]
             print(f"[{tgt_lang.upper()} Beam]: {beam_out}")
