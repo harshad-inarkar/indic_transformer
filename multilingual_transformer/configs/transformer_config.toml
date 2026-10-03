@@ -70,7 +70,7 @@ weight_decay = 0.01
 label_smoothing = 0.1
 torch_compile = false
 gen_batch_size = 256
-bleu_sample = 5000     # number of test sentences used for BLEU/chrF
+bleu_sample = 1000     # number of test sentences used for BLEU/chrF
 save_best = true     # false: use latest checkpoint; true: use best-validation checkpoint
 
 [inference]
