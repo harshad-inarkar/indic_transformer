@@ -8,6 +8,7 @@ import torch
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
+from multilingual_transformer.data.sampler import BucketBatchSampler
 
 # Safely reuse original components
 from multilingual_transformer.data.dataset import (
@@ -117,12 +118,25 @@ class MultilingualDataPipeline:
         }
 
     @staticmethod
-    def create_loader(dataset: TranslationDataset, batch_size: int, shuffle: bool) -> DataLoader:
-        cpu_workers = min(4, os.cpu_count() or 2)
+    def create_loader(
+        dataset: TranslationDataset,
+        batch_size: int,
+        shuffle: bool,
+        rank: int = 0,
+        world_size: int = 1,
+        seed: int = 0,
+    ) -> DataLoader:
+        lengths = [max(len(s), len(t)) for s, t in zip(dataset.src_ids, dataset.tgt_ids)]
+        sampler = BucketBatchSampler(
+            lengths, batch_size, shuffle=shuffle, seed=seed, rank=rank, world_size=world_size
+        )
+        workers = max(1, min(4, (os.cpu_count() or 2) // max(1, world_size)))
         return DataLoader(
-            dataset, batch_size=batch_size, shuffle=shuffle,
-            pin_memory=torch.cuda.is_available(), num_workers=cpu_workers,
-            prefetch_factor=2 if cpu_workers > 0 else None,
-            persistent_workers=True if cpu_workers > 0 else False,
+            dataset,
+            batch_sampler=sampler,
+            pin_memory=torch.cuda.is_available(),
+            num_workers=workers,
+            prefetch_factor=2,
+            persistent_workers=True,
             collate_fn=PadCollator(dataset.pad_src, dataset.pad_tgt),
         )
