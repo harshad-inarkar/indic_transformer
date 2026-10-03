@@ -1,5 +1,62 @@
 
-/content/multilingual_transformer/work_dir
+==================================================
+          INITIALIZING TRAINING PIPELINE
+==================================================
+Dataset Name : ai4bharat/samanantar
+Language     : Hindi (hi)
+Epochs       : 10
+Train Size   : 100000
+Val Size     : 10000
+Test Size    : 10000
+Save Best    : True
+GPUs Active  : 1
+==================================================
+
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Filtering 120,000 random clean pairs from the Arrow-backed dataset ai4bharat/samanantar...
+Extracting Pairs: 100% 120000/120000 [00:12<00:00, 9483.02it/s] 
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 59879    /    59879
+[00:00:00] Count pairs                    ██████████████████ 59879    /    59879
+[00:00:00] Compute merges                 ██████████████████ 15893    /    15893
+[00:00:00] Suffix array seeds             ██████████████████ 91913    /    91913
+[00:00:13] EM training                    ██████████████████ 14       /       14
+Epoch  1/10 | Time: 0m 51s | Train Loss: 6.7955 | Val Loss: 5.1266
+Epoch  2/10 | Time: 0m 54s | Train Loss: 5.0968 | Val Loss: 4.2804
+Epoch  3/10 | Time: 0m 57s | Train Loss: 4.4815 | Val Loss: 3.9523
+Epoch  4/10 | Time: 0m 56s | Train Loss: 4.0838 | Val Loss: 3.7577
+Epoch  5/10 | Time: 0m 56s | Train Loss: 3.7574 | Val Loss: 3.6759
+Epoch  6/10 | Time: 0m 56s | Train Loss: 3.4685 | Val Loss: 3.6351
+Epoch  7/10 | Time: 0m 57s | Train Loss: 3.2184 | Val Loss: 3.6371
+Epoch  8/10 | Time: 0m 56s | Train Loss: 3.0275 | Val Loss: 3.6477
+Epoch  9/10 | Time: 0m 56s | Train Loss: 2.9062 | Val Loss: 3.6639
+Epoch 10/10 | Time: 0m 56s | Train Loss: 2.8529 | Val Loss: 3.6666
+
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 16,000 | TGT = 16,000
+Model Parameters  : 45,580,288 (173.9 MB fp32)
+d_model/layers    : 512 / 4
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 100,000 / 10,000 / 10,000
+BlEU Samples      : 5000
+Batch Size        : 256 (Train) | 256 (Eval)
+Steps per Epoch   : 391
+Total Train Time  : 9.69 minutes
+Peak GPU          : 9.32 GB
+Peak Reserved GPU : 15.21 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  6.66 | CHRF: 25.28
+Beam Decoding     -> BLEU:  7.69 | CHRF: 26.72
+======================================================================
+
+
+----------
 
 ==================================================
           INITIALIZING TRAINING PIPELINE
