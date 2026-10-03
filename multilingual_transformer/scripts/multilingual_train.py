@@ -30,7 +30,7 @@ def print_multilingual_stats_table(
     print(f"Tokenizers Used   : Shared Vocabulary ({cfg.tokenizer.algo_tgt.upper()})")
     print(f"Shared Vocab Size : {vocab_sz:,}")
     print(f"Model Parameters  : {n_params:,} ({n_params * 4 / 1024**2:.1f} MB fp32)")
-    print(f"d_model/layers    : {cfg.model.d_model} / {cfg.model.num_layers}")
+    print(f"Transformer Arch  : d_model {cfg.model.d_model} / num_layers {cfg.model.num_layers}/ d_ff {cfg.model.d_ff}")
     print("-" * 70)
     print(f"Epochs            : {cfg.training.epochs}")
     print(f"BlEU Samples      : {cfg.training.bleu_sample} (per pair)")
