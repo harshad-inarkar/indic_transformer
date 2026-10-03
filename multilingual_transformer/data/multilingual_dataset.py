@@ -39,7 +39,7 @@ class MultilingualDataPipeline:
             return str(rec.get("en", "")).strip(), str(rec.get("sa", "")).strip()
         return str(row["src"]).strip(), str(row["tgt"]).strip()
 
-   def acquire_multilingual_corpus(
+    def acquire_multilingual_corpus(
         self, pairs_per_lang: int, val_per_lang: int, test_per_lang: int, force_download: bool = False
     ) -> dict[str, Any]:
         import pickle
@@ -144,7 +144,7 @@ class MultilingualDataPipeline:
         sampler = BucketBatchSampler(
             lengths, batch_size, shuffle=shuffle, seed=seed, rank=rank, world_size=world_size
         )
-        
+
         return DataLoader(
             dataset,
             batch_sampler=sampler,
