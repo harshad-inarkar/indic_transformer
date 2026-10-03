@@ -43,13 +43,17 @@ class MultilingualDataPipeline:
         self, pairs_per_lang: int, val_per_lang: int, test_per_lang: int, force_download: bool = False
     ) -> dict[str, Any]:
         import pickle
-        cache_path = self.data_dir / "multilingual_corpus_cache.pkl"
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create a unique cache name based on requested sizes and languages
+        lang_hash = "_".join(sorted(self.dataset_map.keys()))
+        cache_name = f"multi_corpus_{lang_hash}_{pairs_per_lang}_{val_per_lang}_{test_per_lang}.pkl"
+        cache_path = self.data_dir / cache_name
         
         if not force_download and cache_path.exists():
+            print(f"Loading cached multilingual corpus from {cache_path.name}...")
             with open(cache_path, "rb") as f:
                 return pickle.load(f)
-
-        self.data_dir.mkdir(parents=True, exist_ok=True)
 
         train_src, train_tgt = [], []
         eval_splits: dict[str, dict[str, list[str]]] = {}

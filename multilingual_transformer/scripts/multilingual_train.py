@@ -91,7 +91,6 @@ def multilingual_worker(rank: int, world_size: int, config_path: str) -> None:
     )
 
     shared_tok_path = cfg.data.tokenizer_dir / f"multilingual_shared_{cfg.tokenizer.max_vocab_size}.json"
-    corpus_cache_path = cfg.data.data_dir / "multilingual_corpus_cache.pkl"
 
     # Rank 0 creates and caches the dataset; other ranks wait
     if is_main:
@@ -100,11 +99,8 @@ def multilingual_worker(rank: int, world_size: int, config_path: str) -> None:
             pairs_per_lang=raw_cfg["multilingual"]["pairs_per_lang"],
             val_per_lang=raw_cfg["multilingual"]["val_size_per_lang"],
             test_per_lang=raw_cfg["multilingual"]["test_size_per_lang"],
+            force_download=cfg.data.force_download,
         )
-        
-        # Save exact corpus dict to ensure identical lengths on all ranks
-        with open(corpus_cache_path, "wb") as f:
-            pickle.dump(corpus, f)
             
         print("Training shared multilingual tokenizer...")
         combined_texts = corpus["train_src"] + corpus["train_tgt"]
@@ -116,10 +112,14 @@ def multilingual_worker(rank: int, world_size: int, config_path: str) -> None:
         
     barrier()  # Wait for Rank 0 to finish processing and writing to disk
 
-    # Other ranks load the exact same processed corpus
+    # Other ranks instantly hit the cached processed corpus
     if not is_main:
-        with open(corpus_cache_path, "rb") as f:
-            corpus = pickle.load(f)
+        corpus = pipeline.acquire_multilingual_corpus(
+            pairs_per_lang=raw_cfg["multilingual"]["pairs_per_lang"],
+            val_per_lang=raw_cfg["multilingual"]["val_size_per_lang"],
+            test_per_lang=raw_cfg["multilingual"]["test_size_per_lang"],
+            force_download=False,
+        )
         shared_tok = MultilingualTokenizerManager.load(shared_tok_path)
 
     tr_ds = TranslationDataset(corpus["train_src"], corpus["train_tgt"], shared_tok, shared_tok, cfg.data.max_len)

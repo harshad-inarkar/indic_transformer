@@ -129,6 +129,7 @@ class DataPipeline:
         sizes = {"train": train_size, "val": val_size, "test": test_size}
         paths = self._cache_paths(sizes)
         if not force_download and all(p.exists() for p in paths.values()):
+            print(f"Loading cached dataset splits from {self.data_dir}...")
             out: list[list[str]] = []
             for p in paths.values():
                 out.extend(self._load_jsonl(p))
@@ -205,7 +206,7 @@ class DataPipeline:
         sampler = BucketBatchSampler(
             lengths, batch_size, shuffle=shuffle, seed=seed, rank=rank, world_size=world_size
         )
-        
+
         return DataLoader(
             dataset,
             batch_sampler=sampler,
