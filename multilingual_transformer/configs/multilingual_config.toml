@@ -1,0 +1,63 @@
+[project]
+name = "multilingual_transformer"
+seed = 42
+
+[language_map]
+English      = "en"
+Hindi        = "hi"
+Marathi      = "mr"
+Sanskrit     = "sa"
+Multilingual = "multi"
+
+[language]
+src_lang = "Multilingual"
+target_lang = "Multilingual"
+dataset_name = "multilingual_blend"
+
+[multilingual]
+# Custom settings for the new pipeline
+target_tokens = ["<2en>", "<2hi>", "<2mr>", "<2sa>"]
+dataset_map = { "hi" = "ai4bharat/samanantar", "mr" = "ai4bharat/samanantar", "sa" = "acomquest/Saamayik" }
+pairs_per_lang = 50000
+val_size_per_lang = 2500
+test_size_per_lang = 2500
+
+[data]
+data_dir = "processed_multi_data"
+checkpoint_dir = "checkpoints_multi"
+tokenizer_dir = "processed_multi_tokenizers"
+train_size = 300000  # Dummy values to satisfy AppConfig
+val_size = 15000
+test_size = 15000
+max_len = 96
+max_length_ratio = 5.0
+force_download = false
+
+[tokenizer]
+algo_src = "wordpiece"
+algo_tgt = "unigram"
+max_vocab_size = 24000  # Shared vocab size covering EN + Indic scripts
+
+[model]
+d_model = 512
+num_layers = 4
+num_heads = 4
+d_ff = 1024
+dropout = 0.1
+
+[training]
+epochs = 10
+batch_size = 256
+lr = 5.0e-4
+weight_decay = 0.01
+label_smoothing = 0.1
+torch_compile = false
+gen_batch_size = 256
+bleu_sample = 1000
+save_best = true
+
+[inference]
+no_repeat_ngram_size = 3
+sample_source = "config"
+num_samples = 5
+sample_sentences = []

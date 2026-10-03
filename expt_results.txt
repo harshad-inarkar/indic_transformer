@@ -1,0 +1,957 @@
+
+/content/multilingual_transformer/work_dir
+
+==================================================
+          INITIALIZING TRAINING PIPELINE
+==================================================
+Dataset Name : ai4bharat/samanantar
+Language     : Hindi (hi)
+Tokenizers   : SRC = WORDPIECE | TGT = UNIGRAM
+Epochs       : 10
+Train Size   : 100000
+Val Size     : 10000
+Test Size    : 10000
+Save Best    : True (best-val checkpoint)
+Samples From : config
+==================================================
+
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Filtering 120,000 random clean pairs from the Arrow-backed dataset ai4bharat/samanantar...
+Extracting Pairs: 100% 120000/120000 [00:09<00:00, 12686.11it/s]
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 59879    /    59879
+[00:00:00] Count pairs                    ██████████████████ 59879    /    59879
+[00:00:00] Compute merges                 ██████████████████ 15893    /    15893
+[00:00:00] Suffix array seeds             ██████████████████ 91913    /    91913
+[00:00:13] EM training                    ██████████████████ 14       /       14
+Epoch  1/10 | Time: 2m 28s | Train Loss: 6.8077 | Val Loss: 4.8844
+Epoch  2/10 | Time: 2m 34s | Train Loss: 5.1233 | Val Loss: 4.0888
+Epoch  3/10 | Time: 2m 34s | Train Loss: 4.5663 | Val Loss: 3.7607
+Epoch  4/10 | Time: 2m 34s | Train Loss: 4.2021 | Val Loss: 3.5771
+Epoch  5/10 | Time: 2m 34s | Train Loss: 3.8978 | Val Loss: 3.4949
+Epoch  6/10 | Time: 2m 35s | Train Loss: 3.6221 | Val Loss: 3.4601
+Epoch  7/10 | Time: 2m 34s | Train Loss: 3.3780 | Val Loss: 3.4605
+Epoch  8/10 | Time: 2m 34s | Train Loss: 3.1817 | Val Loss: 3.4807
+Epoch  9/10 | Time: 2m 34s | Train Loss: 3.0541 | Val Loss: 3.4947
+Epoch 10/10 | Time: 2m 34s | Train Loss: 2.9945 | Val Loss: 3.4993
+
+======================================================================
+                    SAVED CHECKPOINTS
+======================================================================
+Best (lowest val)  : epoch 6/10 | Train 3.6221 | Val 3.4601 | checkpoints/transformer_en_hi_best.pt
+Final (last epoch) : epoch 10/10 | Train 2.9945 | Val 3.4993 | checkpoints/transformer_en_hi_last.pt
+Used for evaluation: best
+======================================================================
+
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 16,000 | TGT = 16,000
+Model Parameters  : 45,580,288 (173.9 MB fp32)
+d_model           : 512
+num_layers        : 4
+num_heads         : 4
+d_ff              : 1024
+dropout           : 0.1
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 100,000 / 10,000 / 10,000
+BlEU Samples      : 5000
+Batch Size        : 256 (Train) | 256 (Eval)
+Steps per Epoch   : 391
+Total Train Time  : 26.18 minutes
+Peak GPU          : 9.33 GB
+Peak Reserved GPU : 12.10 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  7.76 | CHRF: 27.86
+Beam Decoding     -> BLEU:  8.97 | CHRF: 29.33
+======================================================================
+
+
+BLEU signature: nrefs:1|case:lc|eff:no|tok:intl|smooth:exp|version:2.6.0
+chrF signature: nrefs:1|case:lc|eff:yes|nc:6|nw:0|space:no|version:2.6.0
+=== Config Sample Translations (EN-HI) ===
+[1] EN   : farmer is important to the country
+    Greedy : किसानों को देश की काफी अहम है
+    Beam   : किसानों को देश के लिए बहुत जरूरी है
+
+[2] EN   : education is essential for every child
+    Greedy : शिक्षा के लिए हर बच्चे है
+    Beam   : बच्चों के लिए शिक्षा आवश्यक है
+
+[3] EN   : they are going to school
+    Greedy : वे स्कूल में दाखिल करने जा रहे हैं
+    Beam   : वे स्कूल जा रहे हैं
+
+[4] EN   : She is smart girl
+    Greedy : वह लड़की की तैयारी में है।
+    Beam   : वह लड़की की तैयारी में है।
+
+[5] EN   : he is a great teacher
+    Greedy : वह एक महान शिक्षक हैं
+    Beam   : वह एक महान शिक्षक हैं।
+
+
+----
+==================================================
+          INITIALIZING TRAINING PIPELINE
+==================================================
+Dataset Name : ai4bharat/samanantar
+Language     : Hindi (hi)
+Tokenizers   : SRC = WORDPIECE | TGT = UNIGRAM
+Epochs       : 10
+Train Size   : 250000
+Val Size     : 5000
+Test Size    : 5000
+Save Best    : True (best-val checkpoint)
+Samples From : config
+==================================================
+
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Filtering 260,000 random clean pairs from the Arrow-backed dataset ai4bharat/samanantar...
+Extracting Pairs: 100%|██████████████| 260000/260000 [00:18<00:00, 13964.63it/s]
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 92723    /    92723[00:00:00] Tokenize words                 ██████████████████ 0        /        0
+[00:00:00] Count pairs                    ██████████████████ 92723    /    92723
+[00:00:00] Compute merges                 ██████████████████ 15893    /    15893
+[00:00:00] Suffix array seeds             ██████████████████ 157240   /   157240[00:00:00] Suffix array seeds             ██████████████████ 0        /        0
+[00:00:19] EM training                    ██████████████████ 18       /       18
+🚀 Utilizing 2 GPUs for training!
+Epoch  1/10 | Time: 5m 35s | Train Loss: 6.2670 | Val Loss: 4.3242              
+Epoch  2/10 | Time: 5m 32s | Train Loss: 4.6726 | Val Loss: 3.5698              
+Epoch  3/10 | Time: 5m 32s | Train Loss: 4.1720 | Val Loss: 3.2362              
+Epoch  4/10 | Time: 5m 32s | Train Loss: 3.8603 | Val Loss: 3.0433              
+Epoch  5/10 | Time: 5m 32s | Train Loss: 3.6228 | Val Loss: 2.9189              
+Epoch  6/10 | Time: 5m 32s | Train Loss: 3.4220 | Val Loss: 2.8491              
+Epoch  7/10 | Time: 5m 32s | Train Loss: 3.2492 | Val Loss: 2.8155              
+Epoch  8/10 | Time: 5m 32s | Train Loss: 3.1078 | Val Loss: 2.8048              
+Epoch  9/10 | Time: 5m 33s | Train Loss: 3.0093 | Val Loss: 2.8070              
+Epoch 10/10 | Time: 5m 32s | Train Loss: 2.9598 | Val Loss: 2.8088              
+
+======================================================================
+                    SAVED CHECKPOINTS
+======================================================================
+Best (lowest val)  : epoch 8/10 | Train 3.1078 | Val 2.8048 | checkpoints/transformer_en_hi_best.pt
+Final (last epoch) : epoch 10/10 | Train 2.9598 | Val 2.8088 | checkpoints/transformer_en_hi_last.pt
+Used for evaluation: best
+======================================================================
+                                                                                
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 16,000 | TGT = 16,000
+Model Parameters  : 45,580,288 (173.9 MB fp32)
+d_model           : 512
+num_layers        : 4
+num_heads         : 4
+d_ff              : 1024
+dropout           : 0.1
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 250,000 / 5,000 / 5,000
+BlEU Samples      : 1000
+Batch Size        : 256 (Train) | 256 (Eval)
+Steps per Epoch   : 977
+Total Train Time  : 55.67 minutes
+Peak GPU          : 7.32 GB
+Peak Reserved GPU : 9.14 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU: 15.43 | CHRF: 36.62
+Beam Decoding     -> BLEU: 16.71 | CHRF: 38.50
+======================================================================
+
+
+BLEU signature: nrefs:1|case:lc|eff:no|tok:intl|smooth:exp|version:2.6.0
+chrF signature: nrefs:1|case:lc|eff:yes|nc:6|nw:0|space:no|version:2.6.0
+=== Config Sample Translations (EN-HI) ===
+[1] EN   : farmer is important to the country
+    Greedy : किसानों को देश का सबसे बड़ा तोहफा है
+    Beam   : किसान देश के लिए जरूरी है
+
+[2] EN   : education is essential for every child
+    Greedy : शिक्षा हर बच्चे के लिए जरूरी है
+    Beam   : हर बच्चे के लिए शिक्षा जरूरी है
+
+[3] EN   : they are going to school
+    Greedy : वे स्कूल जा रहे हैं
+    Beam   : वे स्कूल जा रहे हैं।
+
+[4] EN   : She is smart girl
+    Greedy : वह स्मार्ट लड़की है
+    Beam   : वह स्मार्ट लड़की है
+
+[5] EN   : he is a great teacher
+    Greedy : वह एक महान शिक्षक हैं
+    Beam   : वह एक महान शिक्षक हैं
+
+
+------
+==================================================
+          INITIALIZING TRAINING PIPELINE
+==================================================
+Dataset Name : ai4bharat/samanantar
+Language     : Hindi (hi)
+Tokenizers   : SRC = WORDPIECE | TGT = UNIGRAM
+Epochs       : 10
+Train Size   : 50000
+Val Size     : 5000
+Test Size    : 5000
+Save Best    : True (best-val checkpoint)
+Samples From : config
+==================================================
+
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Filtering 60,000 random clean pairs from the Arrow-backed dataset ai4bharat/samanantar...
+Extracting Pairs: 100% 60000/60000 [00:05<00:00, 11802.68it/s]
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 43071    /    43071
+[00:00:00] Count pairs                    ██████████████████ 43071    /    43071
+[00:00:00] Compute merges                 ██████████████████ 15893    /    15893
+[00:00:00] Suffix array seeds             ██████████████████ 61339    /    61339
+[00:00:07] EM training                    ██████████████████ 12       /       12
+Epoch  1/10 | Time: 1m 13s | Train Loss: 7.2257 | Val Loss: 5.3832
+Epoch  2/10 | Time: 1m 16s | Train Loss: 5.4872 | Val Loss: 4.5319
+Epoch  3/10 | Time: 1m 17s | Train Loss: 4.8745 | Val Loss: 4.1895
+Epoch  4/10 | Time: 1m 17s | Train Loss: 4.4599 | Val Loss: 4.0086
+Epoch  5/10 | Time: 1m 17s | Train Loss: 4.1055 | Val Loss: 3.9152
+Epoch  6/10 | Time: 1m 17s | Train Loss: 3.7832 | Val Loss: 3.8938
+Epoch  7/10 | Time: 1m 17s | Train Loss: 3.4981 | Val Loss: 3.9017
+Epoch  8/10 | Time: 1m 17s | Train Loss: 3.2753 | Val Loss: 3.9418
+Epoch  9/10 | Time: 1m 17s | Train Loss: 3.1356 | Val Loss: 3.9621
+Epoch 10/10 | Time: 1m 17s | Train Loss: 3.0761 | Val Loss: 3.9692
+
+======================================================================
+                    SAVED CHECKPOINTS
+======================================================================
+Best (lowest val)  : epoch 6/10 | Train 3.7832 | Val 3.8938 | checkpoints/transformer_en_hi_best.pt
+Final (last epoch) : epoch 10/10 | Train 3.0761 | Val 3.9692 | checkpoints/transformer_en_hi_last.pt
+Used for evaluation: best
+======================================================================
+
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 16,000 | TGT = 16,000
+Model Parameters  : 45,580,288 (173.9 MB fp32)
+d_model           : 512
+num_layers        : 4
+num_heads         : 4
+d_ff              : 1024
+dropout           : 0.1
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 50,000 / 5,000 / 5,000
+BlEU Samples      : 1000
+Batch Size        : 256 (Train) | 256 (Eval)
+Steps per Epoch   : 196
+Total Train Time  : 13.46 minutes
+Peak GPU          : 9.33 GB
+Peak Reserved GPU : 12.72 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  4.90 | CHRF: 23.05
+Beam Decoding     -> BLEU:  5.83 | CHRF: 24.04
+======================================================================
+
+
+BLEU signature: nrefs:1|case:lc|eff:no|tok:intl|smooth:exp|version:2.6.0
+chrF signature: nrefs:1|case:lc|eff:yes|nc:6|nw:0|space:no|version:2.6.0
+=== Config Sample Translations (EN-HI) ===
+[1] EN   : farmer is important to the country
+    Greedy : देश की सबसे महत्वपूर्ण महत्वपूर्ण महत्वपूर्ण है
+    Beam   : किसानों को बढ़ाने के लिए महत्वपूर्ण है
+
+[2] EN   : education is essential for every child
+    Greedy : शिक्षा के लिए हर शिक्षा का हर जरूरी है
+    Beam   : बच्चे के शिक्षा के लिए हर जरूरी है
+
+[3] EN   : they are going to school
+    Greedy : उन्हें स्कूल जाने का इंतजाम कर रहे हैं।
+    Beam   : उन्हें स्कूल जाने का इंतजाम कर दिया जाता है।
+
+[4] EN   : She is smart girl
+    Greedy : वह लड़का है लड़का
+    Beam   : वह लड़का है लड़की
+
+[5] EN   : he is a great teacher
+    Greedy : वह एक बड़ा है।
+    Beam   : वह एक बड़ी आबादी है।
+
+
+----
+/content/multilingual_transformer/work_dir
+
+==================================================
+          INITIALIZING TRAINING PIPELINE
+==================================================
+Dataset Name : ai4bharat/samanantar
+Language     : Hindi (hi)
+Tokenizers   : SRC = WORDPIECE | TGT = UNIGRAM
+Epochs       : 10
+Train Size   : 150000
+Val Size     : 5000
+Test Size    : 5000
+Save Best    : True (best-val checkpoint)
+Samples From : config
+==================================================
+
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+README.md: 100% 11.4k/11.4k [00:00<00:00, 30.8MB/s]
+
+hi/train-00000-of-00008.parquet: downloading bytes:  90% 215M/240M [00:01<00:00, 238MB/s, 18.3MB/s  ]
+hi/train-00000-of-00008.parquet: reconstructing file:  28% 67.0M/240M [00:01<00:04, 36.7MB/s]
+hi/train-00000-of-00008.parquet: downloading bytes: 100% 235M/235M [00:01<00:00, 119MB/s, 21.7MB/s  ]
+hi/train-00000-of-00008.parquet: reconstructing file: 100% 240M/240M [00:01<00:00, 121MB/s, 22.7MB/s  ]
+
+hi/train-00001-of-00008.parquet: downloading bytes:  98% 234M/240M [00:01<00:00, 262MB/s, 19.9MB/s  ]
+hi/train-00001-of-00008.parquet: downloading bytes: 100% 235M/235M [00:02<00:00, 111MB/s, 21.9MB/s  ]
+hi/train-00001-of-00008.parquet: reconstructing file: 100% 240M/240M [00:02<00:00, 113MB/s, 22.7MB/s  ]
+
+hi/train-00002-of-00008.parquet: downloading bytes:  98% 235M/240M [00:01<00:00, 279MB/s, 19.9MB/s  ]
+hi/train-00002-of-00008.parquet: downloading bytes: 100% 235M/235M [00:04<00:00, 57.4MB/s, 22.1MB/s  ]
+hi/train-00002-of-00008.parquet: reconstructing file: 100% 240M/240M [00:04<00:00, 58.4MB/s, 21.6MB/s  ]
+
+hi/train-00003-of-00008.parquet: downloading bytes:  96% 229M/240M [00:02<00:00, 109MB/s, 19.6MB/s  ]
+hi/train-00003-of-00008.parquet: reconstructing file:  28% 67.1M/240M [00:03<00:09, 17.5MB/s]
+hi/train-00003-of-00008.parquet: downloading bytes: 100% 235M/235M [00:04<00:00, 54.4MB/s, 20.4MB/s  ]
+hi/train-00003-of-00008.parquet: reconstructing file: 100% 240M/240M [00:04<00:00, 55.4MB/s, 21.3MB/s  ]
+
+hi/train-00004-of-00008.parquet: downloading bytes:  90% 215M/240M [00:01<00:00, 237MB/s, 17.9MB/s  ]
+hi/train-00004-of-00008.parquet: reconstructing file:  28% 67.1M/240M [00:01<00:04, 41.2MB/s]
+hi/train-00004-of-00008.parquet: reconstructing file:  56% 134M/240M [00:01<00:01, 91.9MB/s, 6.42MB/s  ]
+hi/train-00004-of-00008.parquet: downloading bytes: 100% 235M/235M [00:01<00:00, 124MB/s, 21.8MB/s  ]
+hi/train-00004-of-00008.parquet: reconstructing file: 100% 240M/240M [00:01<00:00, 127MB/s, 22.6MB/s  ]
+
+hi/train-00005-of-00008.parquet: downloading bytes:  98% 235M/239M [00:01<00:00, 254MB/s, 21.2MB/s  ]
+hi/train-00005-of-00008.parquet: downloading bytes: 100% 235M/235M [00:02<00:00, 112MB/s, 22.1MB/s  ]
+hi/train-00005-of-00008.parquet: reconstructing file: 100% 239M/239M [00:02<00:00, 114MB/s, 22.6MB/s  ]
+
+hi/train-00006-of-00008.parquet: downloading bytes:  77% 183M/239M [00:01<00:00, 213MB/s, 14.8MB/s  ]
+hi/train-00006-of-00008.parquet: reconstructing file:  28% 67.1M/239M [00:01<00:04, 41.0MB/s]
+hi/train-00006-of-00008.parquet: downloading bytes:  90% 216M/239M [00:01<00:00, 165MB/s, 19.5MB/s  ]
+hi/train-00006-of-00008.parquet: downloading bytes: 100% 235M/235M [00:02<00:00, 96.4MB/s, 20.9MB/s  ]
+hi/train-00006-of-00008.parquet: reconstructing file: 100% 239M/239M [00:02<00:00, 98.2MB/s, 21.8MB/s  ]
+
+hi/train-00007-of-00008.parquet: downloading bytes:  98% 235M/240M [00:01<00:00, 266MB/s, 20.9MB/s  ]
+hi/train-00007-of-00008.parquet: downloading bytes: 100% 235M/235M [00:01<00:00, 123MB/s, 22.1MB/s  ]
+hi/train-00007-of-00008.parquet: reconstructing file: 100% 240M/240M [00:01<00:00, 125MB/s, 22.8MB/s  ]
+Generating train split: 100% 10125706/10125706 [00:29<00:00, 349093.61 examples/s]
+Filtering 160,000 random clean pairs from the Arrow-backed dataset ai4bharat/samanantar...
+Extracting Pairs: 100% 160000/160000 [00:12<00:00, 12423.21it/s]
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 72524    /    72524
+[00:00:00] Count pairs                    ██████████████████ 72524    /    72524
+[00:00:00] Compute merges                 ██████████████████ 15893    /    15893
+[00:00:00] Suffix array seeds             ██████████████████ 116562   /   116562
+[00:00:21] EM training                    ██████████████████ 16       /       16
+Epoch  1/10 | Time: 3m 42s | Train Loss: 6.5740 | Val Loss: 4.6461
+Epoch  2/10 | Time: 3m 46s | Train Loss: 4.9295 | Val Loss: 3.8720
+Epoch  3/10 | Time: 3m 46s | Train Loss: 4.4008 | Val Loss: 3.5415
+Epoch  4/10 | Time: 3m 46s | Train Loss: 4.0579 | Val Loss: 3.3699
+Epoch  5/10 | Time: 3m 46s | Train Loss: 3.7812 | Val Loss: 3.2645
+Epoch  6/10 | Time: 3m 46s | Train Loss: 3.5388 | Val Loss: 3.2144
+Epoch  7/10 | Time: 3m 46s | Train Loss: 3.3258 | Val Loss: 3.2024
+Epoch  8/10 | Time: 3m 46s | Train Loss: 3.1541 | Val Loss: 3.2097
+Epoch  9/10 | Time: 3m 46s | Train Loss: 3.0381 | Val Loss: 3.2222
+Epoch 10/10 | Time: 3m 46s | Train Loss: 2.9825 | Val Loss: 3.2263
+
+======================================================================
+                    SAVED CHECKPOINTS
+======================================================================
+Best (lowest val)  : epoch 7/10 | Train 3.3258 | Val 3.2024 | checkpoints/transformer_en_hi_best.pt
+Final (last epoch) : epoch 10/10 | Train 2.9825 | Val 3.2263 | checkpoints/transformer_en_hi_last.pt
+Used for evaluation: best
+======================================================================
+
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 16,000 | TGT = 16,000
+Model Parameters  : 45,580,288 (173.9 MB fp32)
+d_model           : 512
+num_layers        : 4
+num_heads         : 4
+d_ff              : 1024
+dropout           : 0.1
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 150,000 / 5,000 / 5,000
+BlEU Samples      : 1000
+Batch Size        : 256 (Train) | 256 (Eval)
+Steps per Epoch   : 586
+Total Train Time  : 40.22 minutes
+Peak GPU          : 9.33 GB
+Peak Reserved GPU : 12.35 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  9.18 | CHRF: 30.17
+Beam Decoding     -> BLEU: 11.13 | CHRF: 32.00
+======================================================================
+
+
+BLEU signature: nrefs:1|case:lc|eff:no|tok:intl|smooth:exp|version:2.6.0
+chrF signature: nrefs:1|case:lc|eff:yes|nc:6|nw:0|space:no|version:2.6.0
+=== Config Sample Translations (EN-HI) ===
+[1] EN   : farmer is important to the country
+    Greedy : देश का किसानों का है
+    Beam   : देश का किसानों का है
+
+[2] EN   : education is essential for every child
+    Greedy : हर बच्चे के लिए शिक्षा जरूरी है
+    Beam   : हर बच्चे के लिए शिक्षा जरूरी है
+
+[3] EN   : they are going to school
+    Greedy : वे स्कूल जा रहे हैं
+    Beam   : वे स्कूल जा रहे हैं
+
+[4] EN   : She is smart girl
+    Greedy : वह अपनी स्मार्ट लड़की है।
+    Beam   : वह एक लड़की है।
+
+[5] EN   : he is a great teacher
+    Greedy : वह एक महान शिक्षक है
+    Beam   : वह एक महान शिक्षक है
+
+
+
+
+---
+==================================================
+          INITIALIZING TRAINING PIPELINE
+==================================================
+Dataset Name : ai4bharat/samanantar
+Language     : Hindi (hi)
+Tokenizers   : SRC = WORDPIECE | TGT = UNIGRAM
+Epochs       : 10
+Train Size   : 150000
+Val Size     : 5000
+Test Size    : 5000
+Save Best    : True (best-val checkpoint)
+Samples From : config
+==================================================
+
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Streaming and filtering 160,000 random clean pairs from ai4bharat/samanantar...
+Extracting Pairs: 100%|███████████████| 160000/160000 [01:43<00:00, 1542.22it/s]
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 72569    /    72569[00:00:00] Tokenize words                 ██████████████████ 0        /        0
+[00:00:00] Count pairs                    ██████████████████ 72569    /    72569
+[00:00:00] Compute merges                 ██████████████████ 15893    /    15893
+[00:00:00] Suffix array seeds             ██████████████████ 117132   /   117132[00:00:00] Suffix array seeds             ██████████████████ 0        /        0
+[00:00:11] EM training                    ██████████████████ 16       /       16
+🚀 Utilizing 2 GPUs for training!
+Epoch  1/10 | Time: 3m 16s | Train Loss: 6.9591 | Val Loss: 5.0052              
+Epoch  2/10 | Time: 3m 16s | Train Loss: 5.1831 | Val Loss: 4.1338              
+Epoch  3/10 | Time: 3m 16s | Train Loss: 4.6176 | Val Loss: 3.7690              
+Epoch  4/10 | Time: 3m 16s | Train Loss: 4.2681 | Val Loss: 3.5556              
+Epoch  5/10 | Time: 3m 16s | Train Loss: 3.9986 | Val Loss: 3.4172              
+Epoch  6/10 | Time: 3m 15s | Train Loss: 3.7755 | Val Loss: 3.3532              
+Epoch  7/10 | Time: 3m 16s | Train Loss: 3.5904 | Val Loss: 3.3264              
+Epoch  8/10 | Time: 3m 16s | Train Loss: 3.4482 | Val Loss: 3.3187              
+Epoch  9/10 | Time: 3m 16s | Train Loss: 3.3554 | Val Loss: 3.3186              
+Epoch 10/10 | Time: 3m 16s | Train Loss: 3.3123 | Val Loss: 3.3189              
+
+======================================================================
+                    SAVED CHECKPOINTS
+======================================================================
+Best (lowest val)  : epoch 9/10 | Train 3.3554 | Val 3.3186 | checkpoints/transformer_en_hi_best.pt
+Final (last epoch) : epoch 10/10 | Train 3.3123 | Val 3.3189 | checkpoints/transformer_en_hi_last.pt
+Used for evaluation: best
+======================================================================
+                                                                                
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 16,000 | TGT = 16,000
+Model Parameters  : 45,580,288 (173.9 MB fp32)
+d_model           : 512
+num_layers        : 4
+num_heads         : 4
+d_ff              : 1024
+dropout           : 0.1
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 150,000 / 5,000 / 5,000
+BlEU Samples      : 1000
+Batch Size        : 512 (Train) | 256 (Eval)
+Steps per Epoch   : 293
+Total Train Time  : 32.87 minutes
+Peak GPU          : 14.00 GB
+Peak Reserved GPU : 15.32 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  9.76 | CHRF: 30.61
+Beam Decoding     -> BLEU: 11.80 | CHRF: 32.65
+======================================================================
+
+
+BLEU signature: nrefs:1|case:lc|eff:no|tok:intl|smooth:exp|version:2.6.0
+chrF signature: nrefs:1|case:lc|eff:yes|nc:6|nw:0|space:no|version:2.6.0
+=== Config Sample Translations (EN-HI) ===
+[1] EN   : farmer is important to the country
+    Greedy : किसान को देश के लिए महत्वपूर्ण है
+    Beam   : किसान देश के लिए महत्वपूर्ण है
+
+[2] EN   : education is essential for every child
+    Greedy : शिक्षा के लिए जरूरी है शिक्षा
+    Beam   : हर बच्चे के लिए शिक्षा जरूरी है
+
+[3] EN   : they are going to school
+    Greedy : वे स्कूल जा रहे हैं
+    Beam   : वे स्कूल जा रहे हैं
+
+[4] EN   : She is smart girl
+    Greedy : वह एक लड़की है
+    Beam   : वह स्मार्ट लड़की है
+
+[5] EN   : he is a great teacher
+    Greedy : वह महान शिक्षक हैं।
+    Beam   : वह महान शिक्षक हैं।
+
+
+
+---
+==================================================
+          INITIALIZING TRAINING PIPELINE
+==================================================
+Dataset Name : ai4bharat/samanantar
+Language     : Hindi (hi)
+Tokenizers   : SRC = WORDPIECE | TGT = UNIGRAM
+Epochs       : 10
+Train Size   : 50000
+Val Size     : 5000
+Test Size    : 5000
+Save Best    : True (best-val checkpoint)
+Samples From : config
+==================================================
+
+README.md: 11.4kB [00:00, 5.43MB/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Streaming and filtering 60,000 random clean pairs from ai4bharat/samanantar...
+Extracting Pairs: 100%|█████████████████| 60000/60000 [00:58<00:00, 1027.34it/s]
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 42726    /    42726[00:00:00] Tokenize words                 ██████████████████ 0        /        0
+[00:00:00] Count pairs                    ██████████████████ 42726    /    42726
+[00:00:00] Compute merges                 ██████████████████ 15894    /    15894
+[00:00:00] Suffix array seeds             ██████████████████ 61520    /    61520[00:00:00] Suffix array seeds             ██████████████████ 0        /        0
+[00:00:03] EM training                    ██████████████████ 12       /       12
+🚀 Utilizing 2 GPUs for training!
+Epoch  1/10 | Time: 1m 09s | Train Loss: 7.2291 | Val Loss: 5.4160              
+Epoch  2/10 | Time: 1m 09s | Train Loss: 5.5135 | Val Loss: 4.5605              
+Epoch  3/10 | Time: 1m 08s | Train Loss: 4.8985 | Val Loss: 4.2028              
+Epoch  4/10 | Time: 1m 08s | Train Loss: 4.4830 | Val Loss: 4.0274              
+Epoch  5/10 | Time: 1m 09s | Train Loss: 4.1281 | Val Loss: 3.9332              
+Epoch  6/10 | Time: 1m 08s | Train Loss: 3.8056 | Val Loss: 3.9075              
+Epoch  7/10 | Time: 1m 08s | Train Loss: 3.5204 | Val Loss: 3.9176              
+Epoch  8/10 | Time: 1m 09s | Train Loss: 3.2982 | Val Loss: 3.9506              
+Epoch  9/10 | Time: 1m 08s | Train Loss: 3.1586 | Val Loss: 3.9754              
+Epoch 10/10 | Time: 1m 08s | Train Loss: 3.0987 | Val Loss: 3.9796              
+
+======================================================================
+                    SAVED CHECKPOINTS
+======================================================================
+Best (lowest val)  : epoch 6/10 | Train 3.8056 | Val 3.9075 | checkpoints/transformer_en_hi_best.pt
+Final (last epoch) : epoch 10/10 | Train 3.0987 | Val 3.9796 | checkpoints/transformer_en_hi_last.pt
+Used for evaluation: best
+======================================================================
+                                                                                
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 16,000 | TGT = 16,000
+Model Parameters  : 45,580,288 (173.9 MB fp32)
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 50,000 / 5,000 / 5,000
+BlEU Samples      : 1000
+Batch Size        : 256 (Train) | 256 (Eval)
+Steps per Epoch   : 196
+Total Train Time  : 11.62 minutes
+Peak GPU          : 7.32 GB
+Peak Reserved GPU : 9.14 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  5.64 | CHRF: 24.11
+Beam Decoding     -> BLEU:  6.83 | CHRF: 25.32
+======================================================================
+
+=== Config Sample Translations (EN-HI) ===
+[1] EN   : farmer is important to the country
+    Greedy : किसानों की अहम है
+    Beam   : किसानों को देश के लिए महत्वपूर्ण है
+
+[2] EN   : education is essential for every child
+    Greedy : शिक्षा के लिए शिक्षा प्रदान करने का अवसर है
+    Beam   : शिक्षा के लिए शिक्षा प्रदान करने की तैयारी है
+
+[3] EN   : they are going to school
+    Greedy : वे स्कूल के स्कूल जा रहे हैं
+    Beam   : वे स्कूली स्कूल जा रहे हैं
+
+[4] EN   : She is smart girl
+    Greedy : वह लड़की से शादी कर रही है।
+    Beam   : वह लड़की से शादी कर रही है।
+
+[5] EN   : he is a great teacher
+    Greedy : वह काफी बड़ी चुनौती है
+    Beam   : वह काफी बड़ी चुनौती है
+
+
+-----
+==================================================
+          INITIALIZING TRAINING PIPELINE
+==================================================
+Dataset Name : ai4bharat/samanantar
+Language     : Hindi (hi)
+Tokenizers   : SRC = WORDPIECE | TGT = UNIGRAM
+Epochs       : 10
+Train Size   : 50000
+Val Size     : 5000
+Test Size    : 5000
+Save Best    : True (best-val checkpoint)
+Samples From : config
+==================================================
+
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+README.md: 100% 11.4k/11.4k [00:00<00:00, 27.6MB/s]
+Streaming and filtering 60,000 random clean pairs from ai4bharat/samanantar...
+Extracting Pairs: 100% 60000/60000 [00:16<00:00, 3536.40it/s]
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 42702    /    42702
+[00:00:00] Count pairs                    ██████████████████ 42702    /    42702
+[00:00:00] Compute merges                 ██████████████████ 12693    /    12693
+[00:00:00] Suffix array seeds             ██████████████████ 61050    /    61050
+[00:00:07] EM training                    ██████████████████ 14       /       14
+Epoch  1/10 | Time: 1m 13s | Train Loss: 7.1524 | Val Loss: 5.3921
+Epoch  2/10 | Time: 1m 15s | Train Loss: 5.4655 | Val Loss: 4.5023
+Epoch  3/10 | Time: 1m 15s | Train Loss: 4.8623 | Val Loss: 4.1426
+Epoch  4/10 | Time: 1m 15s | Train Loss: 4.4589 | Val Loss: 3.9699
+Epoch  5/10 | Time: 1m 15s | Train Loss: 4.1134 | Val Loss: 3.8662
+Epoch  6/10 | Time: 1m 15s | Train Loss: 3.8014 | Val Loss: 3.8404
+Epoch  7/10 | Time: 1m 15s | Train Loss: 3.5232 | Val Loss: 3.8594
+Epoch  8/10 | Time: 1m 15s | Train Loss: 3.3057 | Val Loss: 3.8908
+Epoch  9/10 | Time: 1m 15s | Train Loss: 3.1677 | Val Loss: 3.9115
+Epoch 10/10 | Time: 1m 15s | Train Loss: 3.1082 | Val Loss: 3.9166
+
+======================================================================
+                    SAVED CHECKPOINTS
+======================================================================
+Best (lowest val)  : epoch 6/10 | Train 3.8014 | Val 3.8404 | checkpoints/transformer_en_hi_best.pt
+Final (last epoch) : epoch 10/10 | Train 3.1082 | Val 3.9166 | checkpoints/transformer_en_hi_last.pt
+Used for evaluation: best
+======================================================================
+
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 12,800 | TGT = 12,800
+Model Parameters  : 40,665,088 (155.1 MB fp32)
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 50,000 / 5,000 / 5,000
+BlEU Samples      : 1000
+Batch Size        : 256 (Train) | 256 (Eval)
+Steps per Epoch   : 196
+Total Train Time  : 13.11 minutes
+Peak GPU          : 8.33 GB
+Peak Reserved GPU : 11.30 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  5.11 | CHRF: 23.25
+Beam Decoding     -> BLEU:  6.40 | CHRF: 25.15
+======================================================================
+
+=== Config Sample Translations (EN-HI) ===
+[1] EN   : farmer is important to the country
+    Greedy : देश का सबसे महत्वपूर्ण है
+    Beam   : देश का सबसे महत्वपूर्ण है
+
+[2] EN   : education is essential for every child
+    Greedy : बच्चे के लिए हर बच्चे का जरूरी है
+    Beam   : बच्चे के लिए हर बच्चा जरूरी है
+
+[3] EN   : they are going to school
+    Greedy : वे स्कूली हैं
+    Beam   : वे पढ़ाई जा रहे हैं
+
+[4] EN   : She is smart girl
+    Greedy : वह लड़की है लड़की
+    Beam   : वह लड़की एक लड़की है।
+
+[5] EN   : he is a great teacher
+    Greedy : वह एक महान महान महान महान महान है
+    Beam   : वह एक महान महान महान खिलाड़ी है
+
+----
+==================================================
+          INITIALIZING TRAINING PIPELINE
+==================================================
+Dataset Name : ai4bharat/samanantar
+Language     : Hindi (hi)
+Tokenizers   : SRC = WORDPIECE | TGT = UNIGRAM
+Epochs       : 10
+Train Size   : 50000
+Val Size     : 5000
+Test Size    : 5000
+Save Best    : True (best-val checkpoint)
+Samples From : config
+==================================================
+
+README.md: 100% 11.4k/11.4k [00:00<00:00, 27.5MB/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Streaming and filtering 60,000 random clean pairs from ai4bharat/samanantar...
+Extracting Pairs: 100% 60000/60000 [00:18<00:00, 3182.07it/s]
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 42521    /    42521
+[00:00:00] Count pairs                    ██████████████████ 42521    /    42521
+[00:00:00] Compute merges                 ██████████████████ 12693    /    12693
+[00:00:00] Suffix array seeds             ██████████████████ 60582    /    60582
+[00:00:06] EM training                    ██████████████████ 14       /       14
+Epoch  1/10 | Time: 1m 00s | Train Loss: 7.2867 | Val Loss: 5.5128
+Epoch  2/10 | Time: 1m 02s | Train Loss: 5.5848 | Val Loss: 4.6001
+Epoch  3/10 | Time: 1m 02s | Train Loss: 4.9641 | Val Loss: 4.2251
+Epoch  4/10 | Time: 1m 03s | Train Loss: 4.5612 | Val Loss: 4.0167
+Epoch  5/10 | Time: 1m 03s | Train Loss: 4.2316 | Val Loss: 3.8949
+Epoch  6/10 | Time: 1m 03s | Train Loss: 3.9376 | Val Loss: 3.8486
+Epoch  7/10 | Time: 1m 03s | Train Loss: 3.6849 | Val Loss: 3.8513
+Epoch  8/10 | Time: 1m 02s | Train Loss: 3.4884 | Val Loss: 3.8668
+Epoch  9/10 | Time: 1m 03s | Train Loss: 3.3640 | Val Loss: 3.8829
+Epoch 10/10 | Time: 1m 02s | Train Loss: 3.3109 | Val Loss: 3.8857
+
+======================================================================
+                    SAVED CHECKPOINTS
+======================================================================
+Best (lowest val)  : epoch 6/10 | Train 3.9376 | Val 3.8486 | checkpoints/transformer_en_hi_best.pt
+Final (last epoch) : epoch 10/10 | Train 3.3109 | Val 3.8857 | checkpoints/transformer_en_hi_last.pt
+Used for evaluation: best
+======================================================================
+
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 12,800 | TGT = 12,800
+Model Parameters  : 40,665,088 (155.1 MB fp32)
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 50,000 / 5,000 / 5,000
+BlEU Samples      : 3000
+Batch Size        : 320 (Train) | 320 (Eval)
+Steps per Epoch   : 157
+Total Train Time  : 10.97 minutes
+Peak GPU          : 8.69 GB
+Peak Reserved GPU : 10.56 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  4.71 | CHRF: 23.30
+Beam Decoding     -> BLEU:  6.49 | CHRF: 25.25
+======================================================================
+
+----
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 42536    /    42536[00:00:00] Tokenize words                 ██████████████████ 0        /        0
+[00:00:00] Count pairs                    ██████████████████ 42536    /    42536
+[00:00:00] Compute merges                 ██████████████████ 23894    /    23894
+[00:00:00] Suffix array seeds             ██████████████████ 60955    /    60955[00:00:00] Suffix array seeds             ██████████████████ 0        /        0
+[00:00:01] EM training                    ██████████████████ 10       /       10
+🚀 Utilizing 2 GPUs for training!
+Epoch  1/10 | Time: 1m 13s | Train Loss: 7.5979 | Val Loss: 5.6314              
+Epoch  2/10 | Time: 1m 13s | Train Loss: 5.7138 | Val Loss: 4.7422              
+Epoch  3/10 | Time: 1m 13s | Train Loss: 5.0572 | Val Loss: 4.3507              
+Epoch  4/10 | Time: 1m 13s | Train Loss: 4.6229 | Val Loss: 4.1502              
+Epoch  5/10 | Time: 1m 13s | Train Loss: 4.2619 | Val Loss: 4.0494              
+Epoch  6/10 | Time: 1m 13s | Train Loss: 3.9461 | Val Loss: 4.0184              
+Epoch  7/10 | Time: 1m 13s | Train Loss: 3.6715 | Val Loss: 4.0120              
+Epoch  8/10 | Time: 1m 13s | Train Loss: 3.4618 | Val Loss: 4.0334              
+Epoch  9/10 | Time: 1m 13s | Train Loss: 3.3317 | Val Loss: 4.0512              
+Epoch 10/10 | Time: 1m 13s | Train Loss: 3.2768 | Val Loss: 4.0550              
+
+======================================================================
+                    SAVED CHECKPOINTS
+======================================================================
+Best (lowest val)  : epoch 7/10 | Train 3.6715 | Val 4.0120 | checkpoints/transformer_en_hi_best.pt
+Final (last epoch) : epoch 10/10 | Train 3.2768 | Val 4.0550 | checkpoints/transformer_en_hi_last.pt
+Used for evaluation: best
+======================================================================
+                                                                                
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 24,000 | TGT = 24,000
+Model Parameters  : 57,868,288 (220.8 MB fp32)
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 50,000 / 5,000 / 5,000
+BlEU Samples      : 3000
+Batch Size        : 320 (Train) | 320 (Eval)
+Steps per Epoch   : 157
+Total Train Time  : 12.42 minutes
+Peak GPU          : 10.18 GB
+Peak Reserved GPU : 13.09 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  5.83 | CHRF: 24.81
+Beam Decoding     -> BLEU:  7.21 | CHRF: 26.32
+======================================================================
+---
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 42521    /    42521
+[00:00:00] Count pairs                    ██████████████████ 42521    /    42521
+[00:00:00] Compute merges                 ██████████████████ 15893    /    15893
+[00:00:00] Suffix array seeds             ██████████████████ 60582    /    60582
+[00:00:05] EM training                    ██████████████████ 12       /       12
+Epoch  1/10 | Time: 1m 05s | Train Loss: 7.3882 | Val Loss: 5.5432
+Epoch  2/10 | Time: 1m 11s | Train Loss: 5.6245 | Val Loss: 4.6429
+Epoch  3/10 | Time: 1m 11s | Train Loss: 4.9949 | Val Loss: 4.2690
+Epoch  4/10 | Time: 1m 12s | Train Loss: 4.5835 | Val Loss: 4.0533
+Epoch  5/10 | Time: 1m 11s | Train Loss: 4.2428 | Val Loss: 3.9495
+Epoch  6/10 | Time: 1m 11s | Train Loss: 3.9419 | Val Loss: 3.9022
+Epoch  7/10 | Time: 1m 11s | Train Loss: 3.6825 | Val Loss: 3.9085
+Epoch  8/10 | Time: 1m 11s | Train Loss: 3.4791 | Val Loss: 3.9260
+Epoch  9/10 | Time: 1m 11s | Train Loss: 3.3531 | Val Loss: 3.9400
+Epoch 10/10 | Time: 1m 11s | Train Loss: 3.2993 | Val Loss: 3.9435
+
+======================================================================
+                    SAVED CHECKPOINTS
+======================================================================
+Best (lowest val)  : epoch 6/10 | Train 3.9419 | Val 3.9022 | checkpoints/transformer_en_hi_best.pt
+Final (last epoch) : epoch 10/10 | Train 3.2993 | Val 3.9435 | checkpoints/transformer_en_hi_last.pt
+Used for evaluation: best
+======================================================================
+
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 16,000 | TGT = 16,000
+Model Parameters  : 45,580,288 (173.9 MB fp32)
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 50,000 / 5,000 / 5,000
+BlEU Samples      : 3000
+Batch Size        : 320 (Train) | 320 (Eval)
+Steps per Epoch   : 157
+Total Train Time  : 12.98 minutes
+Peak GPU          : 9.71 GB
+Peak Reserved GPU : 11.98 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  4.97 | CHRF: 23.16
+Beam Decoding     -> BLEU:  6.50 | CHRF: 25.09
+======================================================================
+
+----
+Training tokenizers...
+[00:00:00] Tokenize words                 ██████████████████ 42536    /    42536[00:00:00] Tokenize words                 ██████████████████ 0        /        0
+[00:00:00] Count pairs                    ██████████████████ 42536    /    42536
+[00:00:00] Compute merges                 ██████████████████ 12694    /    12694
+[00:00:00] Suffix array seeds             ██████████████████ 60955    /    60955[00:00:00] Suffix array seeds             ██████████████████ 0        /        0
+[00:00:04] EM training                    ██████████████████ 14       /       14
+🚀 Utilizing 2 GPUs for training!
+Epoch  1/10 | Time: 0m 54s | Train Loss: 7.1467 | Val Loss: 5.3644              
+Epoch  2/10 | Time: 0m 51s | Train Loss: 5.4571 | Val Loss: 4.5544              
+Epoch  3/10 | Time: 0m 52s | Train Loss: 4.8505 | Val Loss: 4.1540              
+Epoch  4/10 | Time: 0m 52s | Train Loss: 4.4433 | Val Loss: 3.9800              
+Epoch  5/10 | Time: 0m 52s | Train Loss: 4.0966 | Val Loss: 3.8853              
+Epoch  6/10 | Time: 0m 53s | Train Loss: 3.7797 | Val Loss: 3.8640              
+Epoch  7/10 | Time: 0m 53s | Train Loss: 3.4999 | Val Loss: 3.8759              
+Epoch  8/10 | Time: 0m 53s | Train Loss: 3.2810 | Val Loss: 3.9122              
+Epoch  9/10 | Time: 0m 53s | Train Loss: 3.1426 | Val Loss: 3.9332              
+Epoch 10/10 | Time: 0m 53s | Train Loss: 3.0822 | Val Loss: 3.9373              
+
+======================================================================
+                    SAVED CHECKPOINTS
+======================================================================
+Best (lowest val)  : epoch 6/10 | Train 3.7797 | Val 3.8640 | checkpoints/transformer_en_hi_best.pt
+Final (last epoch) : epoch 10/10 | Train 3.0822 | Val 3.9373 | checkpoints/transformer_en_hi_last.pt
+Used for evaluation: best
+======================================================================
+                                                                                
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 12,800 | TGT = 12,800
+Model Parameters  : 40,677,888 (155.2 MB fp32)
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 50,000 / 5,000 / 5,000
+BlEU Samples      : 3000
+Batch Size        : 256 (Train) | 256 (Eval)
+Steps per Epoch   : 196
+Total Train Time  : 8.94 minutes
+Peak GPU          : 5.36 GB
+Peak Reserved GPU : 6.51 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  5.66 | CHRF: 24.56
+Beam Decoding     -> BLEU:  7.34 | CHRF: 26.35
+======================================================================
+
+
+
+
+------
+Training tokenizers...[00:00:00] Tokenize words                 ██████████████████ 42521    /    42521[00:00:00] Count pairs                    ██████████████████ 42521    /    42521[00:00:00] Compute merges                 ██████████████████ 12693    /    12693[00:00:00] Suffix array seeds             ██████████████████ 60582    /    60582[00:00:07] EM training                    ██████████████████ 14       /       14
+Epoch  1/10 | Time: 1m 08s | Train Loss: 7.1449 | Val Loss: 5.3550
+Epoch  2/10 | Time: 1m 07s | Train Loss: 5.4606 | Val Loss: 4.4994
+Epoch  3/10 | Time: 1m 08s | Train Loss: 4.8515 | Val Loss: 4.1382
+Epoch  4/10 | Time: 1m 08s | Train Loss: 4.4438 | Val Loss: 3.9383
+Epoch  5/10 | Time: 1m 08s | Train Loss: 4.0957 | Val Loss: 3.8572
+Epoch  6/10 | Time: 1m 08s | Train Loss: 3.7805 | Val Loss: 3.8220
+Epoch  7/10 | Time: 1m 08s | Train Loss: 3.4991 | Val Loss: 3.8425
+Epoch  8/10 | Time: 1m 08s | Train Loss: 3.2800 | Val Loss: 3.8670
+Epoch  9/10 | Time: 1m 08s | Train Loss: 3.1408 | Val Loss: 3.8883
+Epoch 10/10 | Time: 1m 08s | Train Loss: 3.0813 | Val Loss: 3.8927
+
+======================================================================
+                    SAVED CHECKPOINTS
+======================================================================
+Best (lowest val)  : epoch 6/10 | Train 3.7805 | Val 3.8220 | checkpoints/transformer_en_hi_best.pt
+Final (last epoch) : epoch 10/10 | Train 3.0813 | Val 3.8927 | checkpoints/transformer_en_hi_last.pt
+Used for evaluation: best
+======================================================================
+
+======================================================================
+              CONSOLIDATED FINAL STATISTICS
+======================================================================
+Target Language   : Hindi (hi)
+Dataset Source    : ai4bharat/samanantar
+Tokenizers Used   : SRC = WORDPIECE | TGT = UNIGRAM
+Vocab Sizes       : SRC = 12,800 | TGT = 12,800
+Model Parameters  : 40,677,888 (155.2 MB fp32)
+----------------------------------------------------------------------
+Epochs            : 10
+Train/Val/Test    : 50,000 / 5,000 / 5,000
+BlEU Samples      : 3000
+Batch Size        : 256 (Train) | 256 (Eval)
+Steps per Epoch   : 196
+Total Train Time  : 11.95 minutes
+Peak GPU          : 7.03 GB
+Peak Reserved GPU : 9.29 GB
+----------------------------------------------------------------------
+Greedy Decoding   -> BLEU:  5.46 | CHRF: 24.71
+Beam Decoding     -> BLEU:  6.87 | CHRF: 26.39
+======================================================================
+
